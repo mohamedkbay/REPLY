@@ -1,0 +1,38 @@
+[
+  {
+    "id": "theme",
+    "start": 0,
+    "duration": 6,
+    "caption": "Light. Dark. One flowing motion."
+  },
+  {
+    "id": "menu",
+    "start": 6,
+    "duration": 6,
+    "caption": "A menu with room to move."
+  },
+  {
+    "id": "language",
+    "start": 12,
+    "duration": 6,
+    "caption": "Arabic and English. The same rhythm."
+  },
+  {
+    "id": "product",
+    "start": 18,
+    "duration": 6,
+    "caption": "One product code. A clear answer."
+  },
+  {
+    "id": "mobile",
+    "start": 24,
+    "duration": 4,
+    "caption": "Made for the screen in your hand."
+  },
+  {
+    "id": "closing",
+    "start": 28,
+    "duration": 4,
+    "caption": "Explore Reply."
+  }
+]

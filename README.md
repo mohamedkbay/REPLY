@@ -14,6 +14,17 @@
   <p><a href="#run-locally">Run locally</a> · <a href="docs/PRODUCT.md">Product</a> · <a href="docs/DESIGN-PHILOSOPHY.md">Design</a> · <a href="docs/ARCHITECTURE.md">Architecture</a> · <a href="deploy/README.md">Deploy</a></p>
 </div>
 
+## Reply in motion
+
+[![Reply motion preview: the actual light/dark wave and layered navigation](docs/media/Reply-Motion-Preview.gif)](docs/media/Reply-Showcase.mp4)
+
+**[Watch the 32-second film](docs/media/Reply-Showcase.mp4)** · [Download the GIF](docs/media/Reply-Motion-Preview.gif) · [Showcase source and production notes](assets/showcase/README.md)
+
+Actual local-demo footage: the organic theme wave, layered menu, Arabic/English transition, product photo reply and phone layout. The film is 1080p at 30 fps; the looping GIF previews theme and menu motion directly in this README. Silence is intentional. Inventory is synthetic and no live messages are sent.
+
+<details>
+<summary>Compare light and dark desktop screenshots</summary>
+
 <table>
   <thead><tr><th>Light mode</th><th>Dark mode</th></tr></thead>
   <tbody><tr>
@@ -23,6 +34,8 @@
 </table>
 
 The same workspace in two modes. Both preserve Cairo, the standalone R identity and clear form hierarchy. Click a preview to inspect it at full size.
+
+</details>
 
 ## The idea
 

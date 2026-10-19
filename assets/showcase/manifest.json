@@ -1,0 +1,46 @@
+{
+  "purpose": "Actual Reply interface footage plus deterministic brand captions. No live messages or customer records.",
+  "audio": "Intentional silence; no external audio assets.",
+  "sources": [
+    {
+      "path": "assets/showcase/footage/language.mp4",
+      "origin": "Captured from the local single-shop Reply demo using Chrome DevTools screencast through the authorized browser tool.",
+      "sha256": "74216c491333589716cd06b7182d0d2ac5f446304c3c2a573e69a0ba50a50bce",
+      "rights": "Reply project UI; see NOTICE.md for inherited software and demonstration photo provenance."
+    },
+    {
+      "path": "assets/showcase/footage/menu.mp4",
+      "origin": "Captured from the local single-shop Reply demo using Chrome DevTools screencast through the authorized browser tool.",
+      "sha256": "4cd6740f10977f967d83715186663c00358debbed936f621f178b6669ffd3bb5",
+      "rights": "Reply project UI; see NOTICE.md for inherited software and demonstration photo provenance."
+    },
+    {
+      "path": "assets/showcase/footage/mobile.mp4",
+      "origin": "Captured from the local single-shop Reply demo using Chrome DevTools screencast through the authorized browser tool.",
+      "sha256": "9cf1870857bbf16517094872e7e265458e42fdc412cdc2a8cbb0f69377cd7d68",
+      "rights": "Reply project UI; see NOTICE.md for inherited software and demonstration photo provenance."
+    },
+    {
+      "path": "assets/showcase/footage/product.mp4",
+      "origin": "Captured from the local single-shop Reply demo using Chrome DevTools screencast through the authorized browser tool.",
+      "sha256": "dcc65b3dd0be84a71dc1d80cf6f186debe3c6c375c1ac9e6b31cdc16b6cdc4a4",
+      "rights": "Reply project UI; see NOTICE.md for inherited software and demonstration photo provenance."
+    },
+    {
+      "path": "assets/showcase/footage/theme.mp4",
+      "origin": "Captured from the local single-shop Reply demo using Chrome DevTools screencast through the authorized browser tool.",
+      "sha256": "af75032be863d90060fba9dd086d8e96a53f0873fcf3dfec29c1527043b26de2",
+      "rights": "Reply project UI; see NOTICE.md for inherited software and demonstration photo provenance."
+    },
+    {
+      "path": "assets/brand/fonts/cairo-600.ttf",
+      "origin": "Existing self-hosted Cairo project font",
+      "license": "SIL OFL; assets/brand/fonts/OFL.txt"
+    },
+    {
+      "path": "assets/brand/logos/png/reply-horizontal-white.png",
+      "origin": "Existing Reply identity export",
+      "rights": "Project-authored identity; see NOTICE.md"
+    }
+  ]
+}

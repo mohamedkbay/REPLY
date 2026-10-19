@@ -22,3 +22,7 @@ All explanatory repository documentation is English. Arabic is retained where it
 ## Screenshots and motion
 
 `media/reply-login-{light,dark}-{desktop,mobile}.jpg` show matching current English sign-in captures in both modes. `media/Reply-Login-Logo*.jpg` show the same standalone top symbol in Arabic. Earlier inventory, signup and identity captures document the preceding full-lockup treatment; they are labelled accordingly in the main README. Inventory shown is synthetic demonstration data. `Reply-Theme-Language-Motion.mp4` records the actual browser implementation of the preference wave. The external reference video is not distributed here.
+
+## Motion showcase
+
+The [32-second film](media/Reply-Showcase.mp4) introduces actual local interface behavior in 1080p/30 fps. The [12-second GIF](media/Reply-Motion-Preview.gif) loops the theme wave and layered menu for native README playback. [Production source, cues and provenance](../assets/showcase/README.md) are included. The film is deliberately silent and contains synthetic inventory only.
