@@ -1,0 +1,19 @@
+:root{
+  --reply-ink:#111111;
+  --reply-paper:#ffffff;
+  --reply-lavender:#e2d8ec;
+  --reply-cobalt:#3e43e8;
+  --reply-coral:#ef916f;
+  --reply-lemon:#f5f480;
+  --reply-muted:#60605c;
+  --reply-line:#e2e2de;
+  --reply-available:#196744;
+  --reply-warning:#8a5a1f;
+  --reply-danger:#9a3a2c;
+  --reply-font:"Cairo",Tahoma,Arial,sans-serif;
+  --reply-ease:cubic-bezier(.16,1,.3,1);
+}
+@font-face{font-family:"Cairo";font-weight:400;font-style:normal;font-display:block;src:url("../fonts/cairo-400.woff2") format("woff2")}
+@font-face{font-family:"Cairo";font-weight:500;font-style:normal;font-display:block;src:url("../fonts/cairo-500.woff2") format("woff2")}
+@font-face{font-family:"Cairo";font-weight:600;font-style:normal;font-display:block;src:url("../fonts/cairo-600.woff2") format("woff2")}
+@font-face{font-family:"Cairo";font-weight:700;font-style:normal;font-display:block;src:url("../fonts/cairo-700.woff2") format("woff2")}

@@ -1,0 +1,58 @@
+{
+  "brand": "Reply",
+  "version": "1.0",
+  "colors": {
+    "ink": "#111111",
+    "paper": "#ffffff",
+    "lavender": "#e2d8ec",
+    "cobalt": "#3e43e8",
+    "coral": "#ef916f",
+    "lemon": "#f5f480",
+    "muted": "#60605c",
+    "line": "#e2e2de",
+    "available": "#196744",
+    "warning": "#8a5a1f",
+    "danger": "#9a3a2c"
+  },
+  "typography": {
+    "family": "Cairo",
+    "weights": [
+      400,
+      500,
+      600,
+      700
+    ],
+    "body": 15,
+    "title": 28,
+    "headline": "clamp(46px,5.2vw,76px)"
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32,
+    40,
+    48,
+    64,
+    80
+  ],
+  "radius": {
+    "field": 6,
+    "panel": 14,
+    "stage": 18,
+    "pill": 999
+  },
+  "motion": {
+    "ease": "cubic-bezier(.16,1,.3,1)",
+    "feedbackMs": 150,
+    "titleMs": 500,
+    "menuMs": 620,
+    "letterMs": 1150,
+    "letterStaggerMs": 75,
+    "patternMs": 3500,
+    "reducedMotion": "static artwork; immediate working controls"
+  }
+}

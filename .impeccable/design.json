@@ -1,0 +1,881 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T08:56:36.579465+00:00",
+  "title": "Design System: Reply",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.005 100)",
+          "oklch(26% 0.005 100)",
+          "oklch(38% 0.005 100)",
+          "oklch(49% 0.005 100)",
+          "oklch(61% 0.005 100)",
+          "oklch(72% 0.005 100)",
+          "oklch(84% 0.005 100)",
+          "oklch(95% 0.005 100)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "Surface Soft",
+        "tonalRamp": [
+          "oklch(15% 0.003 100)",
+          "oklch(26% 0.003 100)",
+          "oklch(38% 0.003 100)",
+          "oklch(49% 0.003 100)",
+          "oklch(61% 0.003 100)",
+          "oklch(72% 0.003 100)",
+          "oklch(84% 0.003 100)",
+          "oklch(95% 0.003 100)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.005 100)",
+          "oklch(26% 0.005 100)",
+          "oklch(38% 0.005 100)",
+          "oklch(49% 0.005 100)",
+          "oklch(61% 0.005 100)",
+          "oklch(72% 0.005 100)",
+          "oklch(84% 0.005 100)",
+          "oklch(95% 0.005 100)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "tonalRamp": [
+          "oklch(15% 0.008 100)",
+          "oklch(26% 0.008 100)",
+          "oklch(38% 0.008 100)",
+          "oklch(49% 0.008 100)",
+          "oklch(61% 0.008 100)",
+          "oklch(72% 0.008 100)",
+          "oklch(84% 0.008 100)",
+          "oklch(95% 0.008 100)"
+        ]
+      },
+      "accent-hover": {
+        "role": "neutral",
+        "displayName": "Accent Hover",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "coral": {
+        "role": "secondary",
+        "displayName": "Coral",
+        "tonalRamp": [
+          "oklch(15% 0.12 45)",
+          "oklch(26% 0.12 45)",
+          "oklch(38% 0.12 45)",
+          "oklch(49% 0.12 45)",
+          "oklch(61% 0.12 45)",
+          "oklch(72% 0.12 45)",
+          "oklch(84% 0.12 45)",
+          "oklch(95% 0.12 45)"
+        ]
+      },
+      "lemon": {
+        "role": "secondary",
+        "displayName": "Lemon",
+        "tonalRamp": [
+          "oklch(15% 0.13 110)",
+          "oklch(26% 0.13 110)",
+          "oklch(38% 0.13 110)",
+          "oklch(49% 0.13 110)",
+          "oklch(61% 0.13 110)",
+          "oklch(72% 0.13 110)",
+          "oklch(84% 0.13 110)",
+          "oklch(95% 0.13 110)"
+        ]
+      },
+      "lavender": {
+        "role": "secondary",
+        "displayName": "Lavender",
+        "tonalRamp": [
+          "oklch(15% 0.03 310)",
+          "oklch(26% 0.03 310)",
+          "oklch(38% 0.03 310)",
+          "oklch(49% 0.03 310)",
+          "oklch(61% 0.03 310)",
+          "oklch(72% 0.03 310)",
+          "oklch(84% 0.03 310)",
+          "oklch(95% 0.03 310)"
+        ]
+      },
+      "cobalt": {
+        "role": "primary",
+        "displayName": "Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.23 278)",
+          "oklch(26% 0.23 278)",
+          "oklch(38% 0.23 278)",
+          "oklch(49% 0.23 278)",
+          "oklch(61% 0.23 278)",
+          "oklch(72% 0.23 278)",
+          "oklch(84% 0.23 278)",
+          "oklch(95% 0.23 278)"
+        ]
+      },
+      "available": {
+        "role": "neutral",
+        "displayName": "Available",
+        "tonalRamp": [
+          "oklch(15% 0.1 155)",
+          "oklch(26% 0.1 155)",
+          "oklch(38% 0.1 155)",
+          "oklch(49% 0.1 155)",
+          "oklch(61% 0.1 155)",
+          "oklch(72% 0.1 155)",
+          "oklch(84% 0.1 155)",
+          "oklch(95% 0.1 155)"
+        ]
+      },
+      "available-soft": {
+        "role": "neutral",
+        "displayName": "Available Soft",
+        "tonalRamp": [
+          "oklch(15% 0.025 150)",
+          "oklch(26% 0.025 150)",
+          "oklch(38% 0.025 150)",
+          "oklch(49% 0.025 150)",
+          "oklch(61% 0.025 150)",
+          "oklch(72% 0.025 150)",
+          "oklch(84% 0.025 150)",
+          "oklch(95% 0.025 150)"
+        ]
+      },
+      "warning": {
+        "role": "neutral",
+        "displayName": "Warning",
+        "tonalRamp": [
+          "oklch(15% 0.09 70)",
+          "oklch(26% 0.09 70)",
+          "oklch(38% 0.09 70)",
+          "oklch(49% 0.09 70)",
+          "oklch(61% 0.09 70)",
+          "oklch(72% 0.09 70)",
+          "oklch(84% 0.09 70)",
+          "oklch(95% 0.09 70)"
+        ]
+      },
+      "warning-soft": {
+        "role": "neutral",
+        "displayName": "Warning Soft",
+        "tonalRamp": [
+          "oklch(15% 0.025 75)",
+          "oklch(26% 0.025 75)",
+          "oklch(38% 0.025 75)",
+          "oklch(49% 0.025 75)",
+          "oklch(61% 0.025 75)",
+          "oklch(72% 0.025 75)",
+          "oklch(84% 0.025 75)",
+          "oklch(95% 0.025 75)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "oklch(15% 0.12 32)",
+          "oklch(26% 0.12 32)",
+          "oklch(38% 0.12 32)",
+          "oklch(49% 0.12 32)",
+          "oklch(61% 0.12 32)",
+          "oklch(72% 0.12 32)",
+          "oklch(84% 0.12 32)",
+          "oklch(95% 0.12 32)"
+        ]
+      },
+      "danger-soft": {
+        "role": "neutral",
+        "displayName": "Danger Soft",
+        "tonalRamp": [
+          "oklch(15% 0.025 35)",
+          "oklch(26% 0.025 35)",
+          "oklch(38% 0.025 35)",
+          "oklch(49% 0.025 35)",
+          "oklch(61% 0.025 35)",
+          "oklch(72% 0.025 35)",
+          "oklch(84% 0.025 35)",
+          "oklch(95% 0.025 35)"
+        ]
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Dark Bg",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Dark Surface",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-surface-soft": {
+        "role": "neutral",
+        "displayName": "Dark Surface Soft",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-ink": {
+        "role": "primary",
+        "displayName": "Dark Ink",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Dark Text",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Dark Muted",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-faint": {
+        "role": "neutral",
+        "displayName": "Dark Faint",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "Dark Line",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-line-strong": {
+        "role": "neutral",
+        "displayName": "Dark Line Strong",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Dark Accent",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-accent-hover": {
+        "role": "neutral",
+        "displayName": "Dark Accent Hover",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-accent-soft": {
+        "role": "neutral",
+        "displayName": "Dark Accent Soft",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-mark": {
+        "role": "neutral",
+        "displayName": "Dark Mark",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-action-ink": {
+        "role": "neutral",
+        "displayName": "Dark Action Ink",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-success": {
+        "role": "neutral",
+        "displayName": "Dark Success",
+        "tonalRamp": [
+          "oklch(15% 0.1 155)",
+          "oklch(26% 0.1 155)",
+          "oklch(38% 0.1 155)",
+          "oklch(49% 0.1 155)",
+          "oklch(61% 0.1 155)",
+          "oklch(72% 0.1 155)",
+          "oklch(84% 0.1 155)",
+          "oklch(95% 0.1 155)"
+        ]
+      },
+      "dark-success-soft": {
+        "role": "neutral",
+        "displayName": "Dark Success Soft",
+        "tonalRamp": [
+          "oklch(15% 0.1 155)",
+          "oklch(26% 0.1 155)",
+          "oklch(38% 0.1 155)",
+          "oklch(49% 0.1 155)",
+          "oklch(61% 0.1 155)",
+          "oklch(72% 0.1 155)",
+          "oklch(84% 0.1 155)",
+          "oklch(95% 0.1 155)"
+        ]
+      },
+      "dark-danger": {
+        "role": "neutral",
+        "displayName": "Dark Danger",
+        "tonalRamp": [
+          "oklch(15% 0.1 45)",
+          "oklch(26% 0.1 45)",
+          "oklch(38% 0.1 45)",
+          "oklch(49% 0.1 45)",
+          "oklch(61% 0.1 45)",
+          "oklch(72% 0.1 45)",
+          "oklch(84% 0.1 45)",
+          "oklch(95% 0.1 45)"
+        ]
+      },
+      "dark-danger-soft": {
+        "role": "neutral",
+        "displayName": "Dark Danger Soft",
+        "tonalRamp": [
+          "oklch(15% 0.1 45)",
+          "oklch(26% 0.1 45)",
+          "oklch(38% 0.1 45)",
+          "oklch(49% 0.1 45)",
+          "oklch(61% 0.1 45)",
+          "oklch(72% 0.1 45)",
+          "oklch(84% 0.1 45)",
+          "oklch(95% 0.1 45)"
+        ]
+      },
+      "dark-warning": {
+        "role": "neutral",
+        "displayName": "Dark Warning",
+        "tonalRamp": [
+          "oklch(15% 0.1 75)",
+          "oklch(26% 0.1 75)",
+          "oklch(38% 0.1 75)",
+          "oklch(49% 0.1 75)",
+          "oklch(61% 0.1 75)",
+          "oklch(72% 0.1 75)",
+          "oklch(84% 0.1 75)",
+          "oklch(95% 0.1 75)"
+        ]
+      },
+      "dark-warning-soft": {
+        "role": "neutral",
+        "displayName": "Dark Warning Soft",
+        "tonalRamp": [
+          "oklch(15% 0.1 75)",
+          "oklch(26% 0.1 75)",
+          "oklch(38% 0.1 75)",
+          "oklch(49% 0.1 75)",
+          "oklch(61% 0.1 75)",
+          "oklch(72% 0.1 75)",
+          "oklch(84% 0.1 75)",
+          "oklch(95% 0.1 75)"
+        ]
+      },
+      "dark-lavender": {
+        "role": "neutral",
+        "displayName": "Dark Lavender",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-focus": {
+        "role": "neutral",
+        "displayName": "Dark Focus",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-placeholder": {
+        "role": "neutral",
+        "displayName": "Dark Placeholder",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-login": {
+        "role": "neutral",
+        "displayName": "Dark Login",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-reply": {
+        "role": "neutral",
+        "displayName": "Dark Reply",
+        "tonalRamp": [
+          "oklch(15% 0.015 310)",
+          "oklch(26% 0.015 310)",
+          "oklch(38% 0.015 310)",
+          "oklch(49% 0.015 310)",
+          "oklch(61% 0.015 310)",
+          "oklch(72% 0.015 310)",
+          "oklch(84% 0.015 310)",
+          "oklch(95% 0.015 310)"
+        ]
+      },
+      "dark-customer": {
+        "role": "neutral",
+        "displayName": "Dark Customer",
+        "tonalRamp": [
+          "oklch(15% 0.18 278)",
+          "oklch(26% 0.18 278)",
+          "oklch(38% 0.18 278)",
+          "oklch(49% 0.18 278)",
+          "oklch(61% 0.18 278)",
+          "oklch(72% 0.18 278)",
+          "oklch(84% 0.18 278)",
+          "oklch(95% 0.18 278)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Arabic page headline",
+        "purpose": "Shared main page titles; phone override is 44px/1.4."
+      }
+    },
+    "shadows": [
+      {
+        "name": "workspace-conversation",
+        "value": "0 18px 44px #65301b26",
+        "purpose": "Live reply conversation over the coral workspace."
+      },
+      {
+        "name": "form-switch-thumb",
+        "value": "0 1px 2px #15191633",
+        "purpose": "Inherited form switch thumb only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "Shared native WAAPI and expressive CSS easing."
+      },
+      {
+        "name": "menu-layers-enter",
+        "value": "560ms; 45ms stagger",
+        "purpose": "Lavender/coral/lemon layers from translateY(102%) to 0."
+      },
+      {
+        "name": "menu-sheet-enter",
+        "value": "620ms; initial delay 100ms",
+        "purpose": "White sheet from translateY(105%) to 0; reversal captures rendered pose before cancellation."
+      },
+      {
+        "name": "menu-links-enter",
+        "value": "450ms; initial delay 220ms + index × 35ms",
+        "purpose": "Opacity and 32px vertical stagger."
+      },
+      {
+        "name": "menu-tiles-enter",
+        "value": "480ms; initial delay 270ms + index × 70ms",
+        "purpose": "Opacity and 45px translate entrance preserving CSS tile offset."
+      },
+      {
+        "name": "menu-close",
+        "value": "sheet 280ms; layers 300ms + (2 − index) × 35ms",
+        "purpose": "Close from actual poses; version guard prevents stale hide completion."
+      },
+      {
+        "name": "title-reveal",
+        "value": "500ms; translateY(24px) and clip-path",
+        "purpose": "Visible page title entrance."
+      },
+      {
+        "name": "section-reveal",
+        "value": "480ms; opacity .4→1 and translateY(26px)→0",
+        "purpose": "One-time stock/provider/automation entrances at intersection threshold .1."
+      },
+      {
+        "name": "workspace-scroll",
+        "value": "scale(.84→1) over 420px",
+        "purpose": "Passive scroll listener and requestAnimationFrame; disabled for reduced motion."
+      },
+      {
+        "name": "image-hover",
+        "value": ".65s var(--ease); scale(.975) rotate(-1deg)",
+        "purpose": "Hover-capable gallery product media."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "No spatial animation, transitions or scroll scaling",
+        "purpose": "CSS media query and live matchMedia preference changes."
+      },
+      {
+        "name": "access-letter-arrival",
+        "value": "1150ms / 75ms stagger",
+        "purpose": "Oversized login REPLY letters rise, unskew and assemble on arrival."
+      },
+      {
+        "name": "access-pattern-arrival",
+        "value": "3200ms / 3500ms",
+        "purpose": "Four-dot brand motifs bloom and rotate once, then settle; reduced motion is static."
+      },
+      {
+        "name": "font-ready-arrival",
+        "value": "400/500/600/700 font load promises",
+        "purpose": "Wait for locally preloaded Cairo before text entrances; avoid visible fallback-font swaps."
+      },
+      {
+        "name": "preference-wave",
+        "value": "880ms; linear; six cubic Bézier clip-path keyframes",
+        "purpose": "Native View Transition reveals the new theme or locale through a growing organic contour from the selected control; mirrored by control position. Cross-document opt-in is limited to language intent."
+      },
+      {
+        "name": "preference-font-warmup",
+        "value": "Cairo 400/500/600/700 load promises before capture",
+        "purpose": "Capture uses the local Cairo faces. Reduced motion or unsupported transitions apply immediately; a live reduced-motion change skips active motion."
+      },
+      {
+        "name": "theme-control-press",
+        "value": "scale(.94)",
+        "purpose": "44px circular theme control press feedback; static under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "hide-header-status",
+        "value": "1200px"
+      },
+      {
+        "name": "compact-header-and-gallery",
+        "value": "1000px"
+      },
+      {
+        "name": "phone",
+        "value": "700px"
+      },
+      {
+        "name": "retained-inventory-form",
+        "value": "1050px"
+      },
+      {
+        "name": "retained-single-fields",
+        "value": "640px"
+      },
+      {
+        "name": "preference-header-compact",
+        "value": "1280px"
+      }
+    ],
+    "preferenceBehavior": {
+      "sources": [
+        "public/reply-preferences.css",
+        "public/reply-preferences.js",
+        "src/appearance.ts"
+      ],
+      "assetVersion": 4,
+      "styleOrder": "appearanceStyles after reply-studio.css",
+      "initialTheme": "light",
+      "persistence": "Theme uses localStorage and a year-long same-site cookie; language uses the existing preference route/cookie.",
+      "languageHandoff": "Matching return page only, under ten seconds; restore ordinary safe fields, scroll and open menu. Exclude password, file, hidden, submit/button and fields named for token, secret, password, key or code.",
+      "font": "Existing locally served Cairo, all four weights warmed before transition capture.",
+      "fallback": "Immediate preference application for reduced motion or unsupported transitions."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Shared adopted action with press feedback.",
+      "html": "<button class=\"ds-primary\" dir=\"rtl\">حفظ التغييرات</button>",
+      "css": ".ds-primary{font-family:\"Cairo\",Tahoma,Arial,sans-serif;background:var(--ink,#111);color:var(--surface,#fff);border:1px solid transparent;border-radius:999px;height:46px;min-height:44px;padding:0 22px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s,transform .35s cubic-bezier(.16,1,.3,1)}.ds-primary:hover{background:var(--accent-hover,#333)}.ds-primary:active{transform:scale(.96)}.ds-primary:focus-visible{outline:2px solid #111;outline-offset:4px}.ds-primary:disabled{opacity:.45;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}.ds-primary:active{transform:none}}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "description": "Shared adopted action with press feedback.",
+      "html": "<button class=\"ds-secondary\" dir=\"rtl\">إلغاء</button>",
+      "css": ".ds-secondary{font-family:\"Cairo\",Tahoma,Arial,sans-serif;background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line-strong,#b8b8b2);border-radius:999px;height:46px;min-height:44px;padding:0 22px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s,transform .35s cubic-bezier(.16,1,.3,1)}.ds-secondary:hover{border-color:var(--muted,#60605c)}.ds-secondary:active{transform:scale(.96)}.ds-secondary:focus-visible{outline:2px solid #111;outline-offset:4px}.ds-secondary:disabled{opacity:.45;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}.ds-secondary:active{transform:none}}",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "description": "Labelled field with visible focus and native input behavior.",
+      "html": "<label class=\"ds-label\" dir=\"rtl\">اسم المنتج<input class=\"ds-input\" placeholder=\"اسم المنتج\"></label>",
+      "css": ".ds-label{font-family:\"Cairo\",Tahoma,Arial,sans-serif;display:block;font-size:13px;font-weight:500;color:var(--ink,#111)}.ds-input{font-family:\"Cairo\",Tahoma,Arial,sans-serif;display:block;margin-top:6px;width:100%;font-size:16px;color:var(--text,#242424);background:var(--surface,#fff);border:1px solid var(--line-strong,#b8b8b2);border-radius:6px;padding:10px 12px;transition:border-color .15s}.ds-input::placeholder{color:var(--muted,#60605c)}.ds-input:focus{outline:0;border-color:var(--ink,#111);box-shadow:none}.ds-input[aria-invalid=true]{border-color:var(--danger,#9a3a2c)}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}",
+      "refersTo": "input"
+    },
+    {
+      "name": "Navigation capsule",
+      "kind": "nav",
+      "description": "Compact desktop capsule; full menu remains the phone navigation.",
+      "html": "<nav class=\"ds-nav\" dir=\"rtl\" aria-label=\"لوحة الإدارة\"><a href=\"#\" aria-current=\"page\">المخزن</a><a href=\"#\">الإعدادات</a></nav>",
+      "css": ".ds-nav{font-family:\"Cairo\",Tahoma,Arial,sans-serif;display:flex;width:fit-content;padding:6px 8px;gap:0;border-radius:14px;background:#f6f6f4}.ds-nav a{padding:8px 14px;min-height:42px;align-content:center;border-radius:999px;color:#111;font-size:13px;font-weight:500;text-decoration:none;transition:background .2s,color .2s}.ds-nav a[aria-current]{background:#e8e8e5;font-weight:600}.ds-nav a:last-child{margin-inline-start:8px;padding-inline:22px;background:#111;color:#fff}.ds-nav a:hover{background:#e3d9ee}.ds-nav a:last-child:hover{background:#333}.ds-nav a:focus-visible{outline:2px solid #111;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-nav a{transition:none}}",
+      "refersTo": "navigation"
+    },
+    {
+      "name": "Available chip",
+      "kind": "chip",
+      "description": "Truthful positive stock or operational status.",
+      "html": "<span class=\"ds-chip\" dir=\"rtl\">متوفر</span>",
+      "css": ".ds-chip{font-family:\"Cairo\",Tahoma,Arial,sans-serif;display:inline-flex;width:fit-content;background:#e9f4ec;color:#196744;font-size:12px;font-weight:500;line-height:1.5;padding:1px 8px;border-radius:5px;white-space:nowrap}",
+      "refersTo": "available-chip"
+    },
+    {
+      "name": "Inventory feature tile",
+      "kind": "card",
+      "description": "Cobalt full-menu feature; desktop companion tile is black and vertically offset.",
+      "html": "<a class=\"ds-feature\" href=\"#\" dir=\"rtl\"><span>منتجاتك في مكان واحد</span><strong>المخزن</strong><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M19 5 5 19M5 5v14h14\"/></svg></a>",
+      "css": ".ds-feature{font-family:\"Cairo\",Tahoma,Arial,sans-serif;display:flex;flex-direction:column;justify-content:space-between;width:220px;aspect-ratio:.85;padding:26px;border-radius:14px;background:var(--cobalt,#3e43e8);color:#fff;text-decoration:none;transition:transform .5s cubic-bezier(.16,1,.3,1)}.ds-feature span{font-size:12px}.ds-feature strong{font-size:30px;font-weight:500;line-height:1.35;margin-top:auto;padding:45px 0 14px}.ds-feature svg{width:48px;height:48px;transition:transform .4s cubic-bezier(.16,1,.3,1)}.ds-feature:hover{transform:translateY(-8px)}.ds-feature:hover svg{transform:translate(-5px,5px)}.ds-feature:focus-visible{outline:2px solid #111;outline-offset:4px}@media(prefers-reduced-motion:reduce),(hover:none){.ds-feature,.ds-feature svg{transition:none}.ds-feature:hover,.ds-feature:hover svg{transform:none}}",
+      "refersTo": "feature-tile"
+    },
+    {
+      "name": "Four-dot menu trigger",
+      "kind": "button",
+      "description": "44px trigger opens the layered full-screen navigation in the application.",
+      "html": "<button class=\"ds-menu\" aria-label=\"فتح القائمة\" aria-expanded=\"false\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"7\" cy=\"7\" r=\"2\"/><circle cx=\"17\" cy=\"7\" r=\"2\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/></svg></button>",
+      "css": ".ds-menu{display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:#111;cursor:pointer;transition:background .2s,transform .3s cubic-bezier(.16,1,.3,1)}.ds-menu svg{width:24px;height:24px;fill:currentColor}.ds-menu:hover{background:var(--lavender,#e2d8ec);transform:rotate(8deg)}.ds-menu:focus-visible{outline:2px solid #111;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-menu{transition:none}.ds-menu:hover{transform:none}}"
+    },
+    {
+      "name": "Availability switch",
+      "kind": "custom",
+      "description": "Actual application saves stock availability; this isolated sample shows the available state.",
+      "html": "<button class=\"ds-stock\" dir=\"rtl\" role=\"switch\" aria-checked=\"true\"><span aria-hidden=\"true\"></span>متوفر</button>",
+      "css": ".ds-stock{font-family:\"Cairo\",Tahoma,Arial,sans-serif;display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 0;border:0;background:transparent;color:#196744;font-size:12px;cursor:pointer}.ds-stock>span{width:30px;height:18px;border-radius:99px;background:#196744;position:relative}.ds-stock>span:after{content:\"\";width:12px;height:12px;position:absolute;top:3px;right:3px;border-radius:50%;background:#fff;transform:translateX(-12px);transition:transform .18s ease-out}.ds-stock[aria-checked=false]{color:#60605c}.ds-stock[aria-checked=false]>span{background:#b8b8b2}.ds-stock[aria-checked=false]>span:after{transform:none}.ds-stock:hover{color:#111}.ds-stock:focus-visible{outline:2px solid #111;outline-offset:4px}.ds-stock:disabled{opacity:.5;cursor:wait}@media(prefers-reduced-motion:reduce){.ds-stock>span:after{transition:none}}"
+    },
+    {
+      "name": "Dark primary action",
+      "kind": "button",
+      "refersTo": "button-primary-dark",
+      "description": "Pale lavender primary action with dark lettering on a dark panel.",
+      "html": "<div class=\"ds-dark-panel\"><button class=\"ds-dark-primary\" dir=\"rtl\">حفظ التغييرات</button></div>",
+      "css": ".ds-dark-panel{padding:24px;background:#151419}.ds-dark-primary{font-family:\"Cairo\",Tahoma,Arial,sans-serif;height:46px;padding:0 22px;border:1px solid transparent;border-radius:999px;background:#ece5f6;color:#17121e;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,transform .35s cubic-bezier(.16,1,.3,1)}.ds-dark-primary:hover{background:#d8caed}.ds-dark-primary:focus-visible{outline:2px solid #bfa7ef;outline-offset:4px}.ds-dark-primary:active{transform:scale(.96)}@media(prefers-reduced-motion:reduce){.ds-dark-primary{transition:none}.ds-dark-primary:active{transform:none}}"
+    },
+    {
+      "name": "Theme control",
+      "kind": "button",
+      "refersTo": "theme-toggle-dark",
+      "description": "44px shared circular preference control; application toggles its localized state and sun/moon icon.",
+      "html": "<button class=\"ds-theme\" aria-label=\"الوضع الداكن\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5\"/></svg></button>",
+      "css": ".ds-theme{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;padding:0;border:1px solid #35323e;border-radius:50%;background:#151419;color:#fff;cursor:pointer;touch-action:manipulation}.ds-theme svg{width:20px;height:20px;pointer-events:none}.ds-theme:hover{background:#292331}.ds-theme:focus-visible{outline:2px solid #bfa7ef;outline-offset:4px}.ds-theme:active{scale:.94}@media(prefers-reduced-motion:reduce){.ds-theme:active{scale:1}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Afternow Studio",
+    "overview": "Reply combines an open white canvas, confident black type and expressive colored layers with a practical Arabic administration workspace. The user-pinned Afternow reference governs the layered navigation, varied image panels and movement; Cairo and RTL keep the interface native to its owner.\n\nThis is the adopted design across administration and login. The approved response R symbol appears alone at the top of sign-in and in the shared header, without an adjacent Reply wordmark; the footer and work sections stay free of repeated logos. Server HTML selects Studio and loads the shared stylesheet and deferred motion script; legacy browser palette choices do not override it. The code-led direction is recorded in `.impeccable/config.json`; seed `259df29c` is retained provenance, subordinate to the pinned reference.",
+    "keyCharacteristics": [
+      "Cairo, Arabic RTL and the standalone response R symbol.",
+      "Compact navigation capsule, four-dot trigger and layered full-screen menu.",
+      "Photo-led inventory, working reply workspace and a lavender brand footer.",
+      "Interruptible movement, reduced-motion support and honest operating status.",
+      "Shared light/dark and Arabic/English controls reveal through the same organic preference wave."
+    ],
+    "rules": [
+      {
+        "name": "The Clear Writing Rule",
+        "body": "Use white primary writing and pale secondary writing on dark surfaces; preserve dark lettering on the light primary action and colored feature tiles.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** apply this shared design to every page and preserve Cairo, RTL and clear phone layouts.",
+      "**Do** retain the layered menu, expressive color fields and interruptible motion with a reduced-motion path.",
+      "**Do** use actual inventory, saved replies and honest connection/DRY_RUN status.",
+      "Do place the response R symbol alone at sign-in and in the shared header, without an adjacent Reply wordmark; keep task sections and the footer free of repeated logos.",
+      "Do preserve existing Cairo, the Reply identity and all light palette primitives when applying the documented dark variant.",
+      "Do share the organic 880ms preference wave between theme and language, with immediate reduced-motion and unsupported-browser fallbacks."
+    ],
+    "donts": [
+      "**Don't** restore palette preview gates or a monochrome table-only identity.",
+      "**Don't** invent messages, connected accounts, results or testimonials.",
+      "**Don't** introduce decorative raster assets; the shipped demo product photo already existed."
+    ]
+  }
+}
