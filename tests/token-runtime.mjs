@@ -1,48 +1,44 @@
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { build } from "esbuild";
-import { Miniflare, createFetchMock } from "miniflare";
+import { Miniflare, convertV4MiniflareOptions, Response as RuntimeResponse } from "miniflare";
 
 // Verify Web Crypto, request options and D1 in Cloudflare's actual runtime (workerd).
 // All credentials are fake and every outbound request is intercepted; no network is used.
-const fakeMeta = createFetchMock();
-fakeMeta.disableNetConnect();
-const graph = fakeMeta.get("https://graph.instagram.com");
-graph.intercept({ path: /^\/v25\.0\/me\?/, method: "GET" })
-  .reply(200, { user_id: "runtime-account", username: "runtime_test" }).persist();
-graph.intercept({ path: /^\/refresh_access_token\?/, method: "GET" })
-  .reply(200, { access_token: "runtime-renewed-token", expires_in: 5184000 }).persist();
 const expectedStarters = [
   { question: "Get the guide", payload: "DM_REPLY__rule-1" },
   { question: "Ask a question", payload: "DM_REPLY__text-ask" },
 ];
-let postedStarterBody;
-graph.intercept({
-  path: /^\/v25\.0\/100001\?/, method: "GET",
-  headers: { authorization: "Bearer runtime-renewed-token" },
-}).reply(200, { username: "runtime_reader", is_user_follow_business: true });
-graph.intercept({ path: /^\/v25\.0\/100002\?/, method: "GET" })
-  .reply(302, "", { headers: { location: "https://untrusted.example.test/profile" } });
-graph.intercept({
-  path: "/v25.0/runtime-account/messenger_profile", method: "POST",
-  headers: { authorization: "Bearer runtime-renewed-token" },
-}).reply((options) => {
-  // Miniflare forwards request bodies as streams, not strings for body matching.
-  postedStarterBody = new Response(options.body).json();
-  return { statusCode: 200, data: { success: true } };
-});
-graph.intercept({ path: "/v25.0/me/messenger_profile?fields=ice_breakers", method: "GET" })
-  .reply(200, { data: [{ ice_breakers: [{ locale: "default", call_to_actions: expectedStarters }] }] });
-
-const telegram = fakeMeta.get("https://api.telegram.org");
-telegram.intercept({ path: "/bot12345:abcdefghijklmnopqrstuvwxyz/getMe", method: "GET" })
-  .reply(200, { ok: true, result: { id: 12345, is_bot: true, username: "runtime_bot" } });
-let connectedSend;
-let connectedPhoto;
-telegram.intercept({ path: "/bot12345:abcdefghijklmnopqrstuvwxyz/sendMessage", method: "POST" })
-  .reply(options => { connectedSend = new Response(options.body).json(); return { statusCode: 200, data: { ok: true, result: { message_id: 1 } } }; });
-telegram.intercept({ path: "/bot12345:abcdefghijklmnopqrstuvwxyz/sendPhoto", method: "POST" })
-  .reply(options => { connectedPhoto = new Response(options.body).json(); return { statusCode: 200, data: { ok: true, result: { message_id: 2 } } }; });
+let postedStarterBody, connectedSend, connectedPhoto;
+const outboundCalls = new Map();
+// Miniflare 5 removed fetchMock. Its outbound service intercepts every fetch,
+// including unexpected destinations, so the test can never fall back to the network.
+async function mockOutbound(request) {
+  const url = new URL(request.url), key = request.method + ' ' + url.origin + url.pathname;
+  outboundCalls.set(key, (outboundCalls.get(key) ?? 0) + 1);
+  if (url.origin === 'https://graph.instagram.com') {
+    if (request.method === 'GET' && url.pathname === '/v25.0/me') return RuntimeResponse.json({user_id:'runtime-account',username:'runtime_test'});
+    if (request.method === 'GET' && url.pathname === '/refresh_access_token') return RuntimeResponse.json({access_token:'runtime-renewed-token',expires_in:5184000});
+    if (request.method === 'GET' && url.pathname === '/v25.0/100001') {
+      assert.equal(request.headers.get('authorization'),'Bearer runtime-renewed-token');
+      assert.equal(outboundCalls.get(key),1,'The second profile lookup must use D1');
+      return RuntimeResponse.json({username:'runtime_reader',is_user_follow_business:true});
+    }
+    if (request.method === 'GET' && url.pathname === '/v25.0/100002') return new RuntimeResponse(null,{status:302,headers:{location:'https://untrusted.example.test/profile'}});
+    if (request.method === 'POST' && url.pathname === '/v25.0/runtime-account/messenger_profile') {
+      assert.equal(request.headers.get('authorization'),'Bearer runtime-renewed-token');
+      postedStarterBody = await request.json();return RuntimeResponse.json({success:true});
+    }
+    if (request.method === 'GET' && url.pathname === '/v25.0/me/messenger_profile') return RuntimeResponse.json({data:[{ice_breakers:[{locale:'default',call_to_actions:expectedStarters}]}]});
+  }
+  if (url.origin === 'https://api.telegram.org') {
+    const prefix='/bot12345:abcdefghijklmnopqrstuvwxyz';
+    if (request.method === 'GET' && url.pathname === prefix+'/getMe') return RuntimeResponse.json({ok:true,result:{id:12345,is_bot:true,username:'runtime_bot'}});
+    if (request.method === 'POST' && url.pathname === prefix+'/sendMessage') {connectedSend=await request.json();return RuntimeResponse.json({ok:true,result:{message_id:1}});}
+    if (request.method === 'POST' && url.pathname === prefix+'/sendPhoto') {connectedPhoto=await request.json();return RuntimeResponse.json({ok:true,result:{message_id:2}});}
+  }
+  throw new Error('Unexpected outbound test request: '+key);
+}
 const bundled = await build({
   stdin: {
     contents: `import { maintainInstagramAccessToken, getInstagramAccessToken } from './src/instagram-token.ts';
@@ -86,15 +82,15 @@ const bundled = await build({
   },
   bundle: true, write: false, format: "esm", platform: "neutral", target: "es2022", logLevel: "silent",
 });
-const mf = new Miniflare({
+const mf = new Miniflare(convertV4MiniflareOptions({
   modules: true, compatibilityDate: "2026-06-30", script: bundled.outputFiles[0].text,
-  d1Databases: ["DB"], fetchMock: fakeMeta,
+  d1Databases: ["DB"], outboundService: mockOutbound,
   bindings: {
     INSTAGRAM_ACCESS_TOKEN: "runtime-initial-token", IG_USER_ID: "runtime-account",
     GRAPH_API_BASE: "https://graph.instagram.com/v25.0",
     ACCOUNT_ENCRYPTION_KEY: "fake-runtime-connection-key-with-32-characters", DRY_RUN: "false",
   },
-});
+}));
 try {
   const db = await mf.getD1Database("DB");
   const migrations = (await readdir("migrations")).filter((filename) => filename.endsWith(".sql")).sort();
@@ -159,10 +155,19 @@ try {
   const photoDelivered = await mf.dispatchFetch('https://reply.example.test/channels/telegram/'+connected.id,{method:'POST',headers:{'x-telegram-bot-api-secret-token':connected.verifyToken},body:JSON.stringify(incoming)});
   assert.equal(photoDelivered.status,200);const outgoingPhoto=await connectedPhoto;assert.equal(outgoingPhoto.photo,'https://reply.example.test/media/products/'+image.id);assert.match(outgoingPhoto.caption,/40 دينار ليبي/);
   assert.equal((await db.prepare('SELECT status FROM channel_events WHERE event_id=\'2\'').first()).status,'sent');
+  const oversized = await mf.dispatchFetch('https://reply.example.test/channels/telegram/'+connected.id,{
+    method:'POST',headers:{'x-telegram-bot-api-secret-token':connected.verifyToken},body:Buffer.alloc(2*1024*1024)
+  });
+  assert.equal(oversized.status,413,'The webhook byte limit must also hold in workerd');
+  assert.equal((await db.prepare('SELECT COUNT(*) n FROM channel_events').first()).n,2);
   console.log('Cloudflare runtime: connected-account encryption, verified webhook, D1 image upload and native photo reply passed.');
-  fakeMeta.assertNoPendingInterceptors();
+  for (const [method,host,path] of [
+    ['GET','graph.instagram.com','/v25.0/100001'],['GET','graph.instagram.com','/v25.0/100002'],
+    ['GET','graph.instagram.com','/v25.0/me/messenger_profile'],['POST','graph.instagram.com','/v25.0/runtime-account/messenger_profile'],
+    ['GET','api.telegram.org','/bot12345:abcdefghijklmnopqrstuvwxyz/getMe'],['POST','api.telegram.org','/bot12345:abcdefghijklmnopqrstuvwxyz/sendMessage'],
+    ['POST','api.telegram.org','/bot12345:abcdefghijklmnopqrstuvwxyz/sendPhoto'],
+  ]) assert.equal(outboundCalls.get(method+' https://'+host+path),1,'Expected exactly one '+method+' '+path);
   console.log("Cloudflare runtime: profile lookup and cache, redirect rejection and verified starter publication passed.");
 } finally {
   await mf.dispose();
-  await fakeMeta.close();
 }

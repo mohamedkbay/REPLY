@@ -4,7 +4,7 @@ import { createHmac } from 'node:crypto';
 import { openDatabase, openWorkspace } from './database.mjs';
 import { createAuth, initializeAuth, cookies, cookieName, digest, normalizeEmail, parseProfile, resendMailer, SESSION_MS } from './auth.mjs';
 import { accessPage, planPage, privacyPage, language } from './pages.mjs';
-import { worker } from '../dist/saas.mjs';
+import { worker, secureHtmlResponse } from '../dist/saas.mjs';
 
 const redirect=(location,headers={})=>new Response(null,{status:303,headers:{location,'cache-control':'no-store',...headers}});
 const html=(body,status=200)=>new Response(body,{status,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'same-origin','x-content-type-options':'nosniff'}});
@@ -152,5 +152,5 @@ export async function createApplication(config) {
       if(config.dryRun===false && auth.state(customer).active)await inWorkspace(customer,()=>worker.scheduled({cron:'* * * * *'},environment(customer)));
     }} finally{pollRunning=false;}
   }
-  return {handle,scheduled,close(){for(const space of spaces.values())space.sqlite.close();db.close();}};
+  return {handle:async(...args)=>secureHtmlResponse(await handle(...args)),scheduled,close(){for(const space of spaces.values())space.sqlite.close();db.close();}};
 }

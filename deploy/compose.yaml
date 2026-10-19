@@ -25,7 +25,9 @@ services:
       retries: 3
   caddy:
     image: caddy:2
-    env_file: ${REPLY_ENV_FILE:-.env}
+    # The proxy needs a domain, never application signing/encryption/mail secrets.
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN using --env-file deploy/.env}
     ports: ['80:80', '443:443']
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

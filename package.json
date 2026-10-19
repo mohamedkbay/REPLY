@@ -18,9 +18,9 @@
   "devDependencies": {
     "@types/node": "^26.0.1",
     "esbuild": "^0.28.1",
-    "miniflare": "^4.20260625.0",
+    "miniflare": "5.20261019.0-beta",
     "typescript": "latest",
-    "wrangler": "latest"
+    "wrangler": "4.151.2"
   },
   "description": "Arabic-first merchant inventory and automated product replies, with a bilingual interface and isolated customer workspaces.",
   "engines": {

@@ -215,10 +215,10 @@ export function renderSentDmsPage(data: { rows: SentDmRow[]; summary: SentDmSumm
     <div id="sent-list">${renderSentRows(data.rows)}</div>
     <p id="sent-empty" class="empty" ${data.rows.length ? "hidden" : ""}>${data.rows.length ? "لا توجد رسائل مطابقة." : "لم تُرسل رسائل بعد."}</p>
     <p class="foot">آخر ${SENT_DMS_LIMIT} رسالة · الأوقات حسب منطقتك الزمنية.</p>
-  </main>${renderFooter()}<script>${clientScript}</script></body></html>`;
+  </main>${renderFooter()}<script>${sentInlineScript}</script></body></html>`;
 }
 
-const clientScript = `
+export const sentInlineScript = `
 (() => {
   const list = document.getElementById('sent-list');
   const summary = document.getElementById('sent-summary');

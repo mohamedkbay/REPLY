@@ -45,8 +45,10 @@ export function renderProductsPage(data: {
         <p class="stock-note">المنتج الموقوف: «متأسف، المنتج غير متوفر حاليًا». الكود المجهول: «الكود مش موجود، تأكد من الكود».</p>
       </section>
       <details class="inventory-preview"><summary>جرّب رد البوت على كود منتج</summary><div>${renderBotPreview("product")}</div></details>
-    </main>${renderFooter()}<script>${script}${botPreviewScript}</script></body></html>`;
+    </main>${renderFooter()}<script>${productsInlineScript()}</script></body></html>`;
 }
+
+export function productsInlineScript(): string { return script + botPreviewScript; }
 
 const script = `
 const studioAdd = document.getElementById('studio-add'), inventoryAdd = document.getElementById('inventory-add');

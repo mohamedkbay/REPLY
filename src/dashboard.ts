@@ -179,7 +179,11 @@ export function renderDashboardPage(data: DashboardData): string {
     </div>
   </main>
   ${renderFooter()}
-  ${newRuleDialog(data.rules, data.accountUsername)}<script>${clientScript}${newRuleScript}${dmFeaturesClientScript}${view === "overview" ? botPreviewScript : ""}</script></body></html>`;
+  ${newRuleDialog(data.rules, data.accountUsername)}<script>${dashboardInlineScript(view)}</script></body></html>`;
+}
+
+export function dashboardInlineScript(view: Page): string {
+  return clientScript + newRuleScript + dmFeaturesClientScript + (view === "overview" ? botPreviewScript : "");
 }
 
 function connectionPanel(connection: InstagramTokenStatus, dryRun: boolean): string {

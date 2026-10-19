@@ -151,6 +151,20 @@ test('language navigation preserves an OTP challenge without exposing its code o
   assert.equal((await h.post('/auth/verify',{id,code},challengeCookie+'; reply_language=en')).status,303);
 });
 
+test('SaaS auth, error, subscription and forwarded dashboard HTML enforce framing and script policies in both languages',async t=>{
+  const h=await setup(t),{cookie}=await h.signup();
+  for(const lang of ['ar','en'])for(const path of ['/auth/login','/auth/signup','/auth/privacy','/admin/subscription','/admin/products','/admin/settings?tab=preview']) {
+    const response=await h.request(path,{headers:{cookie:(path.startsWith('/admin')?cookie+'; ':'')+'reply_language='+lang}});
+    assert.equal(response.status,200);
+    assert.equal(response.headers.get('x-frame-options'),'DENY');
+    const policy=response.headers.get('content-security-policy');
+    assert.match(policy,/frame-ancestors 'none'/);assert.match(policy,/script-src 'self' 'sha256-/);
+    assert.ok(!policy.split(';').find(d=>d.trim().startsWith('script-src ')).includes('unsafe-inline'));
+  }
+  const invalid=await h.post('/auth/verify',{id:'invalid',code:'000000'});
+  assert.equal(invalid.status,400);assert.equal(invalid.headers.get('x-frame-options'),'DENY');
+});
+
 test('real webhook routing uses the owner inventory, checks secrets, and stops at the trial reply cap',async t=>{
   const h=await setup(t),a=await h.signup(1),b=await h.signup(2);
   const cryptoModule=await buildModule('src/accounts.ts');t.after(()=>cryptoModule.dispose());

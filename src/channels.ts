@@ -1,4 +1,5 @@
 import { sendPhotoReply } from "./product-images";
+import { readWebhookBody, RequestBodyTooLarge } from "./request-body";
 import type { ProductReply } from "./products";
 import { accountSecrets, getAccount, isPlatform, listAccounts, platformRequest, sameSecret, verifySignature, type Account, type ConnectionEnv, type Platform } from "./accounts";
 import { extractDmEvents } from "./dm-events";
@@ -97,8 +98,12 @@ export async function handleChannelWebhook(request: Request, env: ConnectionEnv,
     return json({ error: "رمز التحقق غير صحيح." }, 403);
   }
   if (request.method !== "POST") return json({ error: "طريقة غير مدعومة." }, 405);
-  if (Number(request.headers.get("content-length")) > 1024 * 1024) return json({ error: "الطلب كبير جدًا." }, 413);
-  const raw = await request.arrayBuffer(); if (raw.byteLength > 1024 * 1024) return json({ error: "الطلب كبير جدًا." }, 413);
+  let raw: ArrayBuffer;
+  try { raw = await readWebhookBody(request); }
+  catch (error) {
+    if (error instanceof RequestBodyTooLarge) return json({ error: "الطلب كبير جدًا." }, 413);
+    throw error;
+  }
   let payload: Record<string, any>;
   try { payload = object(JSON.parse(new TextDecoder().decode(raw))); } catch { return json({ error: "طلب غير صالح." }, 400); }
   if (platform === "telegram") {

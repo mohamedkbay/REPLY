@@ -1,4 +1,6 @@
 import { languageResponse, localizeAdminResponse } from "./i18n";
+import { secureHtmlResponse } from "./security-headers";
+import { readWebhookBody, RequestBodyTooLarge } from "./request-body";
 import { pollTikTokAccounts, recentTikTokEvents } from "./tiktok";
 import { parseProductImage, serveProductImage, sendPhotoReply, type ReplyImage } from "./product-images";
 import { handleSettings } from "./settings-routes";
@@ -277,7 +279,7 @@ export default {
   ...worker,
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
     if (request.method === "GET" && new URL(request.url).pathname === "/admin/language") return languageResponse(request);
-    return localizeAdminResponse(request, await worker.fetch(request, env, ctx));
+    return secureHtmlResponse(await localizeAdminResponse(request, await worker.fetch(request, env, ctx)));
   }
 };
 
@@ -286,7 +288,12 @@ async function handleWebhookPost(
   env: AppEnv,
   ctx: ExecutionContext
 ): Promise<Response> {
-  const rawBody = await request.arrayBuffer();
+  let rawBody: ArrayBuffer;
+  try { rawBody = await readWebhookBody(request); }
+  catch (error) {
+    if (error instanceof RequestBodyTooLarge) return json({ ok: false, error: "Request too large" }, 413);
+    throw error;
+  }
   const signature = request.headers.get("x-hub-signature-256");
   const appSecret = env.INSTAGRAM_APP_SECRET ?? env.META_APP_SECRET ?? "";
 
