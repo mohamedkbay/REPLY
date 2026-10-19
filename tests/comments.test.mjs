@@ -152,7 +152,7 @@ test("test mode records matches without sending and blocks retries", async (t) =
   const retry = await h.postForm("/admin/events/old-failure/retry", {}, cookie);
   assert.equal(retry.status, 400);
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
-  assert.match(html, /Test match/);
+  assert.match(html, /مطابقة تجريبية/);
   assert.doesNotMatch(html, /\/retry"/, "Retry buttons are hidden in test mode");
   assert.equal(h.calls.length, 0);
 });
@@ -174,7 +174,7 @@ test("retrying a failed public reply resends only the public reply", async (t) =
   assert.equal(privateCalls(h).length, 1);
   assert.equal(publicCalls(h).length, 1);
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
-  assert.match(html, /Retry public reply/);
+  assert.match(html, /إعادة إرسال الرد العلني/);
   failPublic = false;
   const retried = await h.postForm("/admin/events/public-failure/retry", {}, cookie);
   assert.equal(retried.status, 303, await retried.text());
@@ -265,7 +265,7 @@ test("admin routes require a session and reject cross-site writes", async (t) =>
   const h = await fixture(t);
   const login = await h.request("/admin");
   assert.equal(login.status, 200);
-  assert.match(await login.text(), /<h1>Sign in<\/h1>[\s\S]*name="token"/);
+  assert.match(await login.text(), /<h1>تسجيل الدخول<\/h1>[\s\S]*name="token"/);
   const wrongPassword = await h.postForm("/admin/login", { token: "wrong" });
   assert.equal(wrongPassword.headers.get("location"), "/admin?error=1");
   const before = h.query("SELECT COUNT(*) AS count FROM rules").count;

@@ -141,23 +141,23 @@ function knownReply(reply: ReplyKey, customReplies: CustomReply[], ruleIds?: Rea
 }
 
 export function validateCustomReply(reply: CustomReply): string | null {
-  if (!reply || typeof reply !== "object") return "Custom reply is invalid.";
-  if (typeof reply.id !== "string" || !/^[a-z0-9]{1,24}$/.test(reply.id)) return "Custom reply ID is invalid.";
-  if (typeof reply.label !== "string" || !reply.label.trim() || reply.label.length > 80) return "Custom reply name must be 1–80 characters.";
-  if (typeof reply.text !== "string" || !reply.text.trim() || reply.text.length > MAX_CUSTOM_REPLY_LENGTH) return "Custom reply text must be 1–1,000 characters.";
+  if (!reply || typeof reply !== "object") return "الرد المخصص غير صالح.";
+  if (typeof reply.id !== "string" || !/^[a-z0-9]{1,24}$/.test(reply.id)) return "معرّف الرد المخصص غير صالح.";
+  if (typeof reply.label !== "string" || !reply.label.trim() || reply.label.length > 80) return "اسم الرد المخصص يجب أن يكون من 1 إلى 80 حرفًا.";
+  if (typeof reply.text !== "string" || !reply.text.trim() || reply.text.length > MAX_CUSTOM_REPLY_LENGTH) return "نص الرد المخصص يجب أن يكون من 1 إلى 1,000 حرف.";
   return null;
 }
 
 export function validateStoryRule(rule: StoryRule): string | null {
-  if (!rule || typeof rule !== "object") return "Story rule is invalid.";
-  if (typeof rule.id !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(rule.id)) return "Story rule ID is invalid.";
-  if (typeof rule.label !== "string" || !rule.label.trim() || rule.label.length > 80) return "Story rule name must be 1–80 characters.";
-  if (typeof rule.storyId !== "string" || (rule.storyId && !/^\d{1,40}$/.test(rule.storyId))) return "Story ID must contain numbers only.";
-  if (typeof rule.storyUrl !== "string" || (rule.storyUrl && !validHttpsUrl(rule.storyUrl))) return "Story or link-sticker URL must use HTTPS.";
-  if (typeof rule.keyword !== "string" || rule.keyword.length > 80) return "Story keyword must be 80 characters or fewer.";
-  if (!rule.storyId && !rule.storyUrl && !rule.keyword.trim()) return "Add a story ID, URL, or keyword.";
-  if (!isReplyKey(rule.reply)) return "Choose a reply for the story rule.";
-  if (typeof rule.enabled !== "boolean") return "Story rule status is invalid.";
+  if (!rule || typeof rule !== "object") return "قاعدة القصة غير صالحة.";
+  if (typeof rule.id !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(rule.id)) return "معرّف قاعدة القصة غير صالح.";
+  if (typeof rule.label !== "string" || !rule.label.trim() || rule.label.length > 80) return "اسم قاعدة القصة يجب أن يكون من 1 إلى 80 حرفًا.";
+  if (typeof rule.storyId !== "string" || (rule.storyId && !/^\d{1,40}$/.test(rule.storyId))) return "معرّف القصة يجب أن يحتوي أرقامًا فقط.";
+  if (typeof rule.storyUrl !== "string" || (rule.storyUrl && !validHttpsUrl(rule.storyUrl))) return "رابط القصة أو ملصق الرابط يجب أن يبدأ بـ HTTPS.";
+  if (typeof rule.keyword !== "string" || rule.keyword.length > 80) return "الحد الأقصى لكلمة القصة المفتاحية 80 حرفًا.";
+  if (!rule.storyId && !rule.storyUrl && !rule.keyword.trim()) return "أضف معرّف قصة أو رابطًا أو كلمة مفتاحية.";
+  if (!isReplyKey(rule.reply)) return "اختر ردًا لقاعدة القصة.";
+  if (typeof rule.enabled !== "boolean") return "حالة قاعدة القصة غير صالحة.";
   return null;
 }
 
@@ -166,31 +166,31 @@ export function validateStoryRule(rule: StoryRule): string | null {
  * checked against `ruleIds` only when the caller provides them (when saving).
  */
 export function validateDmFeatureSettings(settings: DmFeatureSettings, ruleIds?: ReadonlySet<number>): string | null {
-  if (!settings || typeof settings !== "object") return "DM settings are invalid.";
-  if (typeof settings.startersEnabled !== "boolean" || typeof settings.followerCheckEnabled !== "boolean") return "Feature status is invalid.";
-  if (!Array.isArray(settings.customReplies) || settings.customReplies.length > MAX_CUSTOM_REPLIES) return `Use no more than ${MAX_CUSTOM_REPLIES} custom replies.`;
+  if (!settings || typeof settings !== "object") return "إعدادات الرسائل غير صالحة.";
+  if (typeof settings.startersEnabled !== "boolean" || typeof settings.followerCheckEnabled !== "boolean") return "حالة الميزة غير صالحة.";
+  if (!Array.isArray(settings.customReplies) || settings.customReplies.length > MAX_CUSTOM_REPLIES) return `لا تتجاوز ${MAX_CUSTOM_REPLIES} ردًا مخصصًا.`;
   const customIds = new Set<string>();
   for (const reply of settings.customReplies) {
     const error = validateCustomReply(reply);
     if (error) return error;
-    if (customIds.has(reply.id)) return "Custom reply IDs must be unique.";
+    if (customIds.has(reply.id)) return "يجب أن تكون معرّفات الردود المخصصة فريدة.";
     customIds.add(reply.id);
   }
   if (!Array.isArray(settings.starters) || settings.starters.length > MAX_STARTERS ||
-      (settings.startersEnabled && !settings.starters.length)) return "Add between one and four conversation starters.";
+      (settings.startersEnabled && !settings.starters.length)) return "أضف من زر واحد إلى أربعة أزرار لبدء المحادثة.";
   for (const starter of settings.starters) {
-    if (!starter || typeof starter.title !== "string" || !starter.title.trim() || starter.title.length > 80) return "Each starter needs a title of 1–80 characters.";
-    if (!knownReply(starter.reply, settings.customReplies, ruleIds)) return `Choose an existing reply for the starter “${starter.title}”.`;
+    if (!starter || typeof starter.title !== "string" || !starter.title.trim() || starter.title.length > 80) return "اكتب عنوانًا لكل زر من 1 إلى 80 حرفًا.";
+    if (!knownReply(starter.reply, settings.customReplies, ruleIds)) return `اختر ردًا موجودًا لزر المحادثة «${starter.title}».`;
   }
   if (typeof settings.followerReply !== "string" || settings.followerReply.length > MAX_GREETING_LENGTH ||
-      typeof settings.nonFollowerReply !== "string" || settings.nonFollowerReply.length > MAX_GREETING_LENGTH) return "Follower opening lines must be 80 characters or fewer.";
-  if (!Array.isArray(settings.storyRules) || settings.storyRules.length > MAX_STORY_RULES) return `Use no more than ${MAX_STORY_RULES} story rules.`;
+      typeof settings.nonFollowerReply !== "string" || settings.nonFollowerReply.length > MAX_GREETING_LENGTH) return "الحد الأقصى لترحيب المتابعين 80 حرفًا.";
+  if (!Array.isArray(settings.storyRules) || settings.storyRules.length > MAX_STORY_RULES) return `لا تتجاوز ${MAX_STORY_RULES} قاعدة قصة.`;
   const ids = new Set<string>();
   for (const rule of settings.storyRules) {
     const error = validateStoryRule(rule);
     if (error) return error;
-    if (!knownReply(rule.reply, settings.customReplies, ruleIds)) return `Choose an existing reply for the story rule “${rule.label}”.`;
-    if (ids.has(rule.id)) return "Story rule IDs must be unique.";
+    if (!knownReply(rule.reply, settings.customReplies, ruleIds)) return `اختر ردًا موجودًا لقاعدة القصة «${rule.label}».`;
+    if (ids.has(rule.id)) return "يجب أن تكون معرّفات قواعد القصص فريدة.";
     ids.add(rule.id);
   }
   return null;
@@ -210,7 +210,7 @@ export function parseDmFeaturesForm(form: FormData, existing: DmFeatureSettings,
     const title = typeof titles[index] === "string" ? (titles[index] as string).trim() : "";
     if (!title) continue;
     const reply = replies[index];
-    if (!isReplyKey(reply)) return { ok: false, error: `Choose a reply for the starter “${title}”.` };
+    if (!isReplyKey(reply)) return { ok: false, error: `اختر ردًا لزر المحادثة «${title}».` };
     starters.push({ title, reply });
   }
   const settings: DmFeatureSettings = {
@@ -255,8 +255,8 @@ export function parseCustomReplyForm(form: FormData): Parsed<CustomReply> {
 /** Where a reply key is used. Used to block deleting a reply that is still in use. */
 export function replyUsage(settings: DmFeatureSettings, reply: ReplyKey): string[] {
   return [
-    ...settings.starters.filter((starter) => starter.reply === reply).map((starter) => `conversation starter “${starter.title}”`),
-    ...settings.storyRules.filter((rule) => rule.reply === reply).map((rule) => `story rule “${rule.label}”`)
+    ...settings.starters.filter((starter) => starter.reply === reply).map((starter) => `زر المحادثة «${starter.title}»`),
+    ...settings.storyRules.filter((rule) => rule.reply === reply).map((rule) => `قاعدة القصة «${rule.label}»`)
   ];
 }
 
@@ -298,11 +298,11 @@ function apiUrl(env: FeatureEnv, path: string): URL {
     const base = new URL(env.GRAPH_API_BASE);
     if (base.protocol !== "https:" || base.hostname !== "graph.instagram.com" || base.username || base.password || base.port || base.search || base.hash || !/^\/v\d+\.\d+\/?$/.test(base.pathname)) throw new Error();
     return new URL(`${base.href.replace(/\/$/, "")}/${path}`);
-  } catch { throw new FeatureError("Use the official Instagram Graph API address."); }
+  } catch { throw new FeatureError("استخدم العنوان الرسمي لواجهة إنستغرام."); }
 }
 
 async function readApiJson(response: Response): Promise<Record<string, unknown>> {
-  if (!response.body) throw new FeatureError("Instagram returned an empty response.");
+  if (!response.body) throw new FeatureError("أعاد إنستغرام ردًا فارغًا.");
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -311,7 +311,7 @@ async function readApiJson(response: Response): Promise<Record<string, unknown>>
       const part = await reader.read();
       if (part.done) break;
       size += part.value.byteLength;
-      if (size > MAX_JSON_BYTES) { await reader.cancel(); throw new FeatureError("Instagram returned an unexpected response."); }
+      if (size > MAX_JSON_BYTES) { await reader.cancel(); throw new FeatureError("أعاد إنستغرام ردًا غير متوقع."); }
       chunks.push(part.value);
     }
   } finally { reader.releaseLock(); }
@@ -322,13 +322,13 @@ async function readApiJson(response: Response): Promise<Record<string, unknown>>
     const result: unknown = JSON.parse(new TextDecoder().decode(bytes));
     if (!result || typeof result !== "object" || Array.isArray(result)) throw new Error();
     return result as Record<string, unknown>;
-  } catch { throw new FeatureError("Instagram returned an unexpected response."); }
+  } catch { throw new FeatureError("أعاد إنستغرام ردًا غير متوقع."); }
 }
 
 async function graphRequest(env: FeatureEnv, url: URL, method = "GET", body?: Record<string, unknown>): Promise<Record<string, unknown>> {
   let token: string;
   try { token = await getInstagramAccessToken(env); }
-  catch { throw new FeatureError("Check the Instagram connection, then try again."); }
+  catch { throw new FeatureError("تحقق من اتصال إنستغرام ثم حاول مجددًا."); }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
   try {
@@ -340,17 +340,17 @@ async function graphRequest(env: FeatureEnv, url: URL, method = "GET", body?: Re
       redirect: "manual",
       signal: controller.signal
     });
-    if (response.status >= 300 && response.status < 400) throw new FeatureError("Instagram returned an unexpected redirect.");
+    if (response.status >= 300 && response.status < 400) throw new FeatureError("أعاد إنستغرام إعادة توجيه غير متوقعة.");
     const data = await readApiJson(response);
     const error = data.error && typeof data.error === "object" ? data.error as Record<string, unknown> : null;
-    if (response.status === 401 || error?.code === 190 || error?.code === 102) throw new FeatureError("Instagram rejected the token. Check the connection.");
-    if (response.status === 403 || error?.code === 10 || error?.code === 200) throw new FeatureError("Instagram did not allow this request. Check messaging permissions.");
-    if (!response.ok || error) throw new FeatureError("Instagram could not complete this request. Try again later.");
+    if (response.status === 401 || error?.code === 190 || error?.code === 102) throw new FeatureError("رفض إنستغرام رمز الوصول. افحص الاتصال.");
+    if (response.status === 403 || error?.code === 10 || error?.code === 200) throw new FeatureError("لم يسمح إنستغرام بهذا الطلب. تحقق من صلاحيات المراسلة.");
+    if (!response.ok || error) throw new FeatureError("تعذّر إكمال الطلب في إنستغرام. حاول لاحقًا.");
     return data;
   } catch (error) {
     if (error instanceof FeatureError) throw error;
     // Native fetch errors can contain request details. Keep messages generic.
-    throw new FeatureError("Instagram could not be reached. Try again later.");
+    throw new FeatureError("تعذّر الاتصال بإنستغرام. حاول لاحقًا.");
   } finally { clearTimeout(timeout); }
 }
 
@@ -360,7 +360,7 @@ function profileFromRow(row: ProfileRow): InstagramProfile {
 
 /** Call only after the sender has messaged or tapped a conversation starter (user consent). */
 export async function lookupInstagramProfile(env: FeatureEnv, senderId: string, now = Date.now()): Promise<InstagramProfile> {
-  if (!/^\d{1,40}$/.test(senderId)) return { username: null, isFollower: null, checkedAt: null, error: "Instagram sender ID is invalid." };
+  if (!/^\d{1,40}$/.test(senderId)) return { username: null, isFollower: null, checkedAt: null, error: "معرّف مرسل إنستغرام غير صالح." };
   const cached = await env.DB.prepare("SELECT username, is_follower, checked_at, expires_at, safe_error FROM instagram_profiles WHERE owner_id = ? AND sender_id = ?")
     .bind(env.IG_USER_ID, senderId).first<ProfileRow>();
   if (cached && cached.checked_at <= now && now - cached.checked_at < DAY && cached.expires_at > now) return profileFromRow(cached);
@@ -371,9 +371,9 @@ export async function lookupInstagramProfile(env: FeatureEnv, senderId: string, 
     const data = await graphRequest(env, url);
     const username = typeof data.username === "string" && INSTAGRAM_USERNAME.test(data.username) ? data.username : null;
     const isFollower = typeof data.is_user_follow_business === "boolean" ? data.is_user_follow_business : null;
-    result = { username, isFollower, checkedAt: new Date(now).toISOString(), error: isFollower === null ? "Instagram did not return follow status." : null };
+    result = { username, isFollower, checkedAt: new Date(now).toISOString(), error: isFollower === null ? "لم يُرجع إنستغرام حالة المتابعة." : null };
   } catch (error) {
-    result = { username: null, isFollower: null, checkedAt: new Date(now).toISOString(), error: error instanceof FeatureError ? error.message : "Profile lookup could not finish." };
+    result = { username: null, isFollower: null, checkedAt: new Date(now).toISOString(), error: error instanceof FeatureError ? error.message : "تعذّر إكمال فحص الملف الشخصي." };
   }
   await env.DB.prepare(
     `INSERT INTO instagram_profiles (owner_id, sender_id, username, is_follower, checked_at, expires_at, safe_error)
@@ -420,7 +420,7 @@ export async function getIceBreakersPublicationStatus(db: D1Database, settings?:
 }
 
 function parseRemoteStarters(data: Record<string, unknown>): InstagramIceBreakersResult["starters"] {
-  if (!Array.isArray(data.data)) throw new FeatureError("Instagram returned an unexpected starter list.");
+  if (!Array.isArray(data.data)) throw new FeatureError("أعاد إنستغرام قائمة أزرار غير متوقعة.");
   const wrappers: Record<string, unknown>[] = [];
   for (const item of data.data) {
     if (!item || typeof item !== "object") continue;
@@ -429,10 +429,10 @@ function parseRemoteStarters(data: Record<string, unknown>): InstagramIceBreaker
   }
   const wrapper = wrappers.find((item) => item.locale === "default") ?? wrappers.find((item) => !item.locale) ?? wrappers[0];
   if (!wrapper) return [];
-  if (!Array.isArray(wrapper.call_to_actions)) throw new FeatureError("Instagram returned an unexpected starter list.");
+  if (!Array.isArray(wrapper.call_to_actions)) throw new FeatureError("أعاد إنستغرام قائمة أزرار غير متوقعة.");
   const starters: InstagramIceBreakersResult["starters"] = [];
   for (const item of wrapper.call_to_actions) {
-    if (!item || typeof item !== "object" || typeof item.question !== "string" || typeof item.payload !== "string") throw new FeatureError("Instagram returned an unexpected starter list.");
+    if (!item || typeof item !== "object" || typeof item.question !== "string" || typeof item.payload !== "string") throw new FeatureError("أعاد إنستغرام قائمة أزرار غير متوقعة.");
     starters.push({ title: item.question, payload: item.payload, reply: parseReplyPayload(item.payload) });
   }
   return starters;
@@ -445,7 +445,7 @@ export async function getInstagramIceBreakers(env: FeatureEnv): Promise<Instagra
     const data = await graphRequest(env, url);
     return { starters: parseRemoteStarters(data), error: null };
   } catch (error) {
-    return { starters: [], error: error instanceof FeatureError ? error.message : "Conversation starters could not be checked." };
+    return { starters: [], error: error instanceof FeatureError ? error.message : "تعذّر فحص أزرار المحادثة." };
   }
 }
 
@@ -478,14 +478,14 @@ export async function publishIceBreakers(env: FeatureEnv, settings?: DmFeatureSe
     const result = await graphRequest(env, url, desired.startersEnabled ? "POST" : "DELETE", payload);
     // Meta's mutation response varies between API versions. Only a matching
     // readback below confirms publication; an HTTP 200 alone never does.
-    if (result.success === false) throw new FeatureError("Instagram did not confirm the starter update.");
+    if (result.success === false) throw new FeatureError("لم يؤكد إنستغرام تحديث أزرار المحادثة.");
     const verified = await getInstagramIceBreakers(env);
     if (verified.error) throw new FeatureError(verified.error);
     const actual = verified.starters.map((starter) => ({ question: starter.title, payload: starter.payload }));
-    if (JSON.stringify(actual) !== JSON.stringify(desiredStarters(desired))) throw new FeatureError("Instagram has not returned the updated starters yet. Try publishing again.");
+    if (JSON.stringify(actual) !== JSON.stringify(desiredStarters(desired))) throw new FeatureError("لم يظهر تحديث الأزرار في إنستغرام بعد. حاول نشرها مجددًا.");
   } catch (caught) {
     state = "error";
-    error = caught instanceof FeatureError ? caught.message : "Conversation starters could not be published.";
+    error = caught instanceof FeatureError ? caught.message : "تعذّر نشر أزرار المحادثة.";
   }
   const previous = await publicationRecord(env.DB);
   await env.DB.prepare(

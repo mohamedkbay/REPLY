@@ -2,3 +2,25 @@ node_modules/
 .wrangler/
 .dev.vars
 .admin-token.local
+.reply-data/
+dist/
+deploy/.env
+.saas.env
+
+# Local authoring, generated review evidence and private exports
+work/
+outputs/
+.DS_Store
+*.log
+*.sqlite
+*.sqlite-*
+*.db
+.env
+.env.*
+!.env.example
+.saas.env.*
+!.saas.env.example
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/build/
+.impeccable/config.local.json

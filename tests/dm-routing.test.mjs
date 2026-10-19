@@ -387,10 +387,10 @@ test("custom replies and rules cannot be deleted while a starter or story rule u
   await h.postForm("/admin/story-rules", { ...STORY_FORM, reply: GUIDE }, cookie);
   const blockedText = await h.postForm("/admin/custom-replies", { action: "delete", id: reply.id }, cookie);
   assert.equal(blockedText.status, 400);
-  assert.match(await blockedText.text(), /conversation starter/);
+  assert.match(await blockedText.text(), /زر المحادثة/);
   const blockedRule = await h.postForm("/admin/rules/2", { action: "delete" }, cookie);
   assert.equal(blockedRule.status, 400);
-  assert.match(await blockedRule.text(), /story rule/);
+  assert.match(await blockedRule.text(), /قاعدة القصة/);
   assert.ok(h.query("SELECT id FROM rules WHERE id = 2"));
   const unused = await h.postForm("/admin/custom-replies", { action: "delete", id: "ask" }, cookie);
   assert.equal(unused.status, 303);
@@ -438,8 +438,8 @@ test("publishing from the dashboard sends the saved starters and confirms them",
     { question: "Ask a question", payload: `DM_REPLY__${ASK}` },
   ]);
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
-  assert.match(html, />Live on Instagram</);
-  assert.match(html, /Last published <time/);
+  assert.match(html, />منشورة على إنستغرام</);
+  assert.match(html, /آخر نشر <time/);
 });
 
 test("story URL rules match equivalent normalized URLs", async (t) => {
@@ -526,8 +526,8 @@ test("the dashboard shows DM tools, DM links and escaped DM activity", async (t)
   assert.ok(html.includes("&lt;svg onload=alert(1)&gt; GUIDE"));
   assert.match(html, /id="dm-tools"/);
   assert.match(html, /id="message-activity"/);
-  assert.match(html, /Story reply/);
-  assert.match(html, /Story ID: 777/);
+  assert.match(html, /رد على قصة/);
+  assert.match(html, /معرّف القصة: 777/);
   assert.ok(html.includes(`https://ig.me/test_owner?ref=${GUIDE}__website`), "DM links use OWNER_IG_USERNAME when the connection has not been checked");
   assert.equal(h.calls.length, 0);
 });

@@ -45,28 +45,28 @@ test("only outgoing DMs are listed, with what the person did and said", async (t
   await h.webhook(messagePayload("dm-guide", "guide please"));
 
   const html = await sentPage(h, cookie);
-  assert.match(html, /<h1>Sent DMs<\/h1>/);
-  assert.match(html, /aria-current="page">Sent DMs</);
+  assert.match(html, /<h1>الرسائل المرسلة<\/h1>/);
+  assert.match(html, /aria-current="page">[\s\S]*?الرسائل المرسلة</);
   const rows = rowsOf(html);
   assert.equal(rows.length, 2, "Unmatched comments and DMs are not sent DMs");
 
   const comment = rows.find((row) => row.includes("@sample_reader"));
   assert.ok(comment);
   assert.match(comment, /href="https:\/\/www\.instagram\.com\/sample_reader\/"/);
-  assert.match(comment, /commented/);
+  assert.match(comment, /علّق/);
   assert.match(comment, /<mark>MAIL<\/mark> me the link/);
-  assert.match(comment, /matched MAIL/);
-  assert.match(comment, /Sent Newsletter/);
+  assert.match(comment.replace(/<[^>]*>/g, ""), /طابق MAIL/);
+  assert.match(comment, /تم الإرسال Newsletter/);
   assert.doesNotMatch(comment, /class="partial"/);
   assert.match(comment, /data-kind="comment"/);
 
-  const dm = rows.find((row) => row.includes("messaged you"));
+  const dm = rows.find((row) => row.includes("أرسل لك رسالة"));
   assert.ok(dm);
   assert.match(dm, /data-kind="dm"/);
-  assert.match(dm, /Sent Free guide/);
+  assert.match(dm, /تم الإرسال Free guide/);
   assert.match(dm, /<mark>guide<\/mark> please/, "A typed DM highlights the automation keyword it matched");
   assert.doesNotMatch(html, /hello there|Great post|chatty_reader/);
-  assert.match(html, /<strong>2<\/strong> DMs sent in the last 24 hours/);
+  assert.match(html, /الرسائل المرسلة خلال آخر 24 ساعة: <strong>2<\/strong>/);
   assert.match(html, /data-filter="failed"/);
   assert.match(html, /id="sent-search"/);
   assert.match(html, /setInterval\(poll, 15000\)/);
@@ -86,11 +86,11 @@ test("DMs from starters, story replies and links say how they started", async (t
   await insert("link", "referral", 20, { ref: "text-ask__newsletter" });
   const html = await sentPage(h, cookie);
   assert.deepEqual(rowsOf(html).map((row) => row.match(/data-id="dm:([^"]+)"/)[1]), ["story", "link", "starter"], "Newest first");
-  assert.match(html, /tapped a conversation starter/);
-  assert.match(html, /replied to your story/);
-  assert.match(html, /opened your DM link from newsletter/);
-  assert.match(html, /Instagram user …7890/, "A sender without a username shows the end of their ID");
-  assert.match(html, /Sent Ask a question/);
+  assert.match(html, /ضغط زر بدء محادثة/);
+  assert.match(html, /رد على قصتك/);
+  assert.match(html, /فتح رابط المحادثة من newsletter/);
+  assert.match(html, /مستخدم إنستغرام …7890/, "A sender without a username shows the end of their ID");
+  assert.match(html, /تم الإرسال Ask a question/);
 });
 
 test("older sends where the keyword hit part of a word are flagged", async (t) => {
@@ -100,7 +100,7 @@ test("older sends where the keyword hit part of a word are flagged", async (t) =
     VALUES ('old-email', 'old_reader', 'I emailed you last week', 1, 'sent', 'mail', 'Newsletter', ?, ?)`).bind(now, now).run();
   const [row] = rowsOf(await sentPage(h, cookie));
   assert.match(row, /e<mark>mail<\/mark>ed you/);
-  assert.match(row, /inside “emailed”/);
+  assert.match(row, /داخل “emailed”/);
 });
 
 test("whole-word keyword matches are not flagged as partial", async (t) => {
@@ -123,10 +123,10 @@ test("failed sends are shown and counted separately", async (t) => {
   assert.equal(rows.length, 2);
   for (const row of rows) {
     assert.match(row, /data-failed="1"/);
-    assert.match(row, /Didn’t send/);
+    assert.match(row, /تعذّر الإرسال/);
     assert.match(row, /User cannot receive messages/);
   }
-  assert.match(html, /<strong>0<\/strong> DMs sent in the last 24 hours · <span class="failed-count">2 didn’t send<\/span>/);
+  assert.match(html, /الرسائل المرسلة خلال آخر 24 ساعة: <strong>0<\/strong> · <span class="failed-count">تعذّر إرسال 2<\/span>/);
 });
 
 test("a delivered DM whose public reply failed counts as sent and says so", async (t) => {
@@ -139,8 +139,8 @@ test("a delivered DM whose public reply failed counts as sent and says so", asyn
   const html = await sentPage(h, cookie);
   const [row] = rowsOf(html);
   assert.match(row, /data-failed="0"/);
-  assert.match(row, /DM sent\. The public comment reply failed\./);
-  assert.match(html, /<strong>1<\/strong> DM sent in the last 24 hours/);
+  assert.match(row, /أُرسلت الرسالة الخاصة وتعذّر إرسال التعليق العلني\./);
+  assert.match(html, /الرسائل المرسلة خلال آخر 24 ساعة: <strong>1<\/strong>/);
 });
 
 test("user-supplied text is escaped in the page and in the live feed", async (t) => {
@@ -159,16 +159,16 @@ test("user-supplied text is escaped in the page and in the live feed", async (t)
   assert.deepEqual(Object.keys(data).sort(), ["rows", "summary"]);
   assert.equal(rowsOf(data.rows).length, 1);
   assert.doesNotMatch(data.rows, /<script>/);
-  assert.match(data.summary, /<strong>1<\/strong> DM sent/);
+  assert.match(data.summary, /<strong>1<\/strong>/);
 });
 
 test("test mode says nothing is being sent", async (t) => {
   const { h, cookie } = await fixture(t, { DRY_RUN: "true" });
   await h.webhook(commentPayload("dry", "GUIDE", "reader"));
   const html = await sentPage(h, cookie);
-  assert.match(html, /Test mode is on, so nothing is being sent/);
+  assert.match(html, /وضع الاختبار مفعّل؛ لا تُرسل رسائل فعلية/);
   assert.equal(rowsOf(html).length, 0, "Test matches are not sent DMs");
-  assert.match(html, /No DMs sent yet\./);
+  assert.match(html, /لم تُرسل رسائل بعد\./);
   assert.equal(h.calls.length, 0);
 });
 

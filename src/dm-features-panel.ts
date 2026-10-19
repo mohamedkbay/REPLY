@@ -19,41 +19,41 @@ function esc(value: string): string {
 }
 
 function replyOptions(options: ReplyOption[], selected: string): string {
-  const groups: Array<[ReplyOption["group"], string]> = [["rule", "Keyword automations"], ["text", "Custom replies"]];
+  const groups: Array<[ReplyOption["group"], string]> = [["rule", "أتمتة الكلمات المفتاحية"], ["text", "الردود المخصصة"]];
   const missing = selected && !options.some((option) => option.key === selected)
-    ? `<option value="${esc(selected)}" selected>Removed reply (choose another)</option>` : "";
+    ? `<option value="${esc(selected)}" selected>رد محذوف (اختر غيره)</option>` : "";
   const body = groups.map(([group, label]) => {
     const items = options.filter((option) => option.group === group);
     return items.length
-      ? `<optgroup label="${label}">${items.map((option) => `<option value="${esc(option.key)}" ${option.key === selected ? "selected" : ""}>${esc(option.label)}${option.detail ? ` · ${esc(option.detail)}` : ""}</option>`).join("")}</optgroup>`
+      ? `<optgroup label="${label}">${items.map((option) => `<option translate="no" value="${esc(option.key)}" ${option.key === selected ? "selected" : ""}>${esc(option.label)}${option.detail ? ` · ${esc(option.detail)}` : ""}</option>`).join("")}</optgroup>`
       : "";
   }).join("");
-  return missing + (body || '<option value="">Add an automation or custom reply first</option>');
+  return missing + (body || '<option value="">أضف أتمتة أو ردًا مخصصًا أولًا</option>');
 }
 
 function displayTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return esc(value);
-  return `<time datetime="${esc(date.toISOString())}">${esc(date.toLocaleString("en-US", {
+  return `<time datetime="${esc(date.toISOString())}">${esc(date.toLocaleString("ar-LY", {
     month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC"
   }))} UTC</time>`;
 }
 
 function publication(status: IceBreakersPublicationStatus, enabled: boolean): string {
   const label = status.state === "synced"
-    ? enabled ? "Live on Instagram" : "Removed from Instagram"
-    : status.state === "pending" ? "Instagram has an older version"
-      : status.state === "error" ? "Publishing failed" : "Not on Instagram yet";
+    ? enabled ? "منشورة على إنستغرام" : "أُزيلت من إنستغرام"
+    : status.state === "pending" ? "النسخة المنشورة أقدم من المحفوظة"
+      : status.state === "error" ? "تعذّر النشر" : "لم تُنشر على إنستغرام بعد";
   return `<div class="dm-publish-status"><span class="tag ${status.state === "synced" ? "ok" : status.state === "error" ? "danger" : "warn"}">${label}</span>
-    ${status.syncedAt ? `<span class="field-help">Last published ${displayTime(status.syncedAt)}</span>` : ""}
+    ${status.syncedAt ? `<span class="field-help">آخر نشر ${displayTime(status.syncedAt)}</span>` : ""}
     ${status.error ? `<p class="dm-publish-error" role="status">${esc(status.error)}</p>` : ""}</div>`;
 }
 
 function publishHelp(status: IceBreakersPublicationStatus, dryRun: boolean): string {
-  if (dryRun) return "Publishing is off in test mode.";
+  if (dryRun) return "النشر متوقف في وضع الاختبار.";
   return status.state === "pending"
-    ? "Your saved starters changed after the last publish. Publish to update what people see in Instagram."
-    : "Publishing updates the buttons people see when they open a new chat with you.";
+    ? "تغيّرت أزرار المحادثة بعد آخر نشر. انشرها لتحديث ما يظهر في إنستغرام."
+    : "يحدّث النشر الأزرار التي تظهر عند بدء محادثة جديدة.";
 }
 
 /** The DM tools part of Settings: one two-column row per tool. */
@@ -68,57 +68,57 @@ export function renderDmFeaturesPanel(data: {
   const normalizedUsername = (data.username ?? "").trim().replace(/^@/, "");
   const canBuildLinks = /^[A-Za-z0-9._]{1,30}$/.test(normalizedUsername);
   const defaultReply = options[0]?.key ?? "";
-  return `<section class="dm-tools" id="dm-tools" aria-label="DM tools">
+  return `<section class="dm-tools" id="dm-tools" aria-label="أدوات المراسلة">
     <form action="/admin/dm-features" method="post" id="dm-feature-settings" class="dm-settings-form">
       <div class="setting dm-feature">
-        <div class="setting-intro"><h3 id="dm-starters-title">Conversation starters</h3><p>Up to ${MAX_STARTERS} buttons people see when they open a new chat with you. Each one sends an automation’s DM or a custom reply.</p></div>
+        <div class="setting-intro"><h3 id="dm-starters-title">أزرار بدء المحادثة</h3><p>حتى ${MAX_STARTERS} أزرار تظهر في المحادثة الجديدة. يرسل كل زر رد أتمتة أو ردًا مخصصًا.</p></div>
         <div class="setting-body">
-          <label class="switch-label"><input type="checkbox" name="starters_enabled" ${settings.startersEnabled ? "checked" : ""}><span class="switch"></span>Show conversation starters</label>
+          <label class="switch-label"><input type="checkbox" name="starters_enabled" ${settings.startersEnabled ? "checked" : ""}><span class="switch"></span>إظهار أزرار بدء المحادثة</label>
           <div class="dm-starter-list">${Array.from({ length: MAX_STARTERS }, (_, index) => {
             const starter = settings.starters[index];
-            return `<div class="dm-starter-row"><span class="dm-row-number" aria-hidden="true">${index + 1}</span><label>Button ${index + 1}<input name="starter_title" value="${esc(starter?.title ?? "")}" maxlength="80" placeholder="Leave blank to skip"></label><label>Reply<select name="starter_reply">${replyOptions(options, starter?.reply ?? defaultReply)}</select></label></div>`;
+            return `<div class="dm-starter-row"><span class="dm-row-number" aria-hidden="true">${index + 1}</span><label>الزر ${index + 1}<input name="starter_title" value="${esc(starter?.title ?? "")}" maxlength="80" placeholder="اتركه فارغًا لتجاوزه"></label><label>الرد<select name="starter_reply">${replyOptions(options, starter?.reply ?? defaultReply)}</select></label></div>`;
           }).join("")}</div>
-          <p class="field-help">Saving keeps your starters on this dashboard. Publishing, below, sends them to Instagram.</p>
+          <p class="field-help">الحفظ يحتفظ بالأزرار هنا. استخدم النشر أدناه لإظهارها في إنستغرام.</p>
         </div>
       </div>
       <div class="setting dm-feature">
-        <div class="setting-intro"><h3 id="dm-followers-title">Follower status</h3><p>Open with a different line for followers and for people who don’t follow you. Only checks people who message you or tap a starter.</p></div>
+        <div class="setting-intro"><h3 id="dm-followers-title">حالة المتابعة</h3><p>أضف ترحيبًا مختلفًا للمتابعين وغير المتابعين. يُفحص من يراسلك أو يضغط زر محادثة فقط.</p></div>
         <div class="setting-body">
-          <label class="switch-label"><input type="checkbox" name="follower_check_enabled" ${settings.followerCheckEnabled ? "checked" : ""}><span class="switch"></span>Check follower status for incoming DMs</label>
-          <div class="two-fields"><label>For followers <span class="optional">optional</span><textarea name="follower_reply" rows="2" maxlength="80" placeholder="Thanks for following!">${esc(settings.followerReply)}</textarea></label>
-          <label>For people who don’t follow you <span class="optional">optional</span><textarea name="non_follower_reply" rows="2" maxlength="80" placeholder="Thanks for getting in touch!">${esc(settings.nonFollowerReply)}</textarea></label></div>
-          <p class="field-help">Up to 80 characters, added before the reply when it still fits Instagram’s limit. Blank lines or unavailable follower status keep the usual message. Results are kept for up to 24 hours. This doesn’t message new followers.</p>
-          <div class="form-actions dm-save-actions"><span class="field-help">Saving doesn’t send a message or publish starters.</span><button class="button primary">Save DM settings</button></div>
+          <label class="switch-label"><input type="checkbox" name="follower_check_enabled" ${settings.followerCheckEnabled ? "checked" : ""}><span class="switch"></span>فحص متابعة أصحاب الرسائل الواردة</label>
+          <div class="two-fields"><label>للمتابعين <span class="optional">اختياري</span><textarea name="follower_reply" rows="2" maxlength="80" placeholder="شكرًا لمتابعتك!">${esc(settings.followerReply)}</textarea></label>
+          <label>لغير المتابعين <span class="optional">اختياري</span><textarea name="non_follower_reply" rows="2" maxlength="80" placeholder="أهلًا بك، شكرًا لتواصلك!">${esc(settings.nonFollowerReply)}</textarea></label></div>
+          <p class="field-help">حتى 80 حرفًا قبل الرد ضمن حدود إنستغرام. تُستخدم الرسالة العادية إذا تُرك الترحيب فارغًا أو تعذّر فحص المتابعة. تُحفظ النتيجة 24 ساعة؛ لا تُرسل رسائل تلقائية للمتابعين الجدد.</p>
+          <div class="form-actions dm-save-actions"><span class="field-help">الحفظ لا يرسل رسالة ولا ينشر الأزرار.</span><button class="button primary">حفظ إعدادات المراسلة</button></div>
         </div>
       </div>
     </form>
     <div class="setting dm-publish-row">
-      <div class="setting-intro"><h3>Publish starters</h3><p>Saving keeps the starters on this dashboard. Publishing sends them to Instagram, where they appear in the mobile app.</p></div>
-      <div class="setting-body">${publication(data.publication, settings.startersEnabled)}<form action="/admin/dm-features/publish" method="post" id="dm-publish-form"><button class="button secondary" data-publish-starters ${data.dryRun ? "disabled" : ""}>${settings.startersEnabled ? "Publish saved starters" : "Remove starters from Instagram"}</button></form><p class="field-help" id="dm-publish-help">${publishHelp(data.publication, data.dryRun)}</p></div>
+      <div class="setting-intro"><h3>نشر أزرار المحادثة</h3><p>يحفظ الأزرار في لوحة الإدارة؛ ينشرها زر النشر في تطبيق إنستغرام.</p></div>
+      <div class="setting-body">${publication(data.publication, settings.startersEnabled)}<form action="/admin/dm-features/publish" method="post" id="dm-publish-form"><button class="button secondary" data-publish-starters ${data.dryRun ? "disabled" : ""}>${settings.startersEnabled ? "نشر الأزرار المحفوظة" : "إزالة الأزرار من إنستغرام"}</button></form><p class="field-help" id="dm-publish-help">${publishHelp(data.publication, data.dryRun)}</p></div>
     </div>
     ${customReplies(settings.customReplies)}
     <section class="setting dm-feature dm-story-section" aria-labelledby="dm-story-title">
-      <div class="setting-intro"><h3 id="dm-story-title">Story replies</h3><p>Send a reply when someone answers a specific story, a keyword in any story, or both. A specific story wins over a keyword for every story, and a paused rule blocks broader ones. These run before automations that listen for story replies.</p><p class="field-help">Use a story ID or link-sticker URL when you can. Story media links expire. ${settings.storyRules.length} of ${MAX_STORY_RULES} used.</p></div>
+      <div class="setting-intro"><h3 id="dm-story-title">ردود القصص</h3><p>أرسل ردًا على قصة محددة أو كلمة في أي قصة. للقصة المحددة الأولوية، والقاعدة المتوقفة تمنع القواعد العامة. تُنفذ هذه القواعد قبل أتمتة ردود القصص.</p><p class="field-help">استخدم معرّف القصة أو رابط ملصقها؛ روابط وسائط القصص مؤقتة. المستخدم: ${settings.storyRules.length} من ${MAX_STORY_RULES}.</p></div>
       <div class="setting-body">
       ${storyRules(settings.storyRules, options)}
-      ${settings.storyRules.length < MAX_STORY_RULES ? `<details class="dm-add-story"><summary>Add a story rule</summary><form action="/admin/story-rules" method="post" class="stack dm-new-story-form">
-        <input type="hidden" name="action" value="save"><div class="two-fields"><label>Rule name<input name="label" required maxlength="80" placeholder="Workshop story"></label><label>Reply<select name="reply">${replyOptions(options, defaultReply)}</select></label></div>
-        <div class="two-fields"><label>Story ID <span class="optional">optional</span><input name="story_id" maxlength="40" inputmode="numeric" pattern="[0-9]*" placeholder="From Activity"></label><label>Keyword <span class="optional">optional</span><input name="keyword" maxlength="80" placeholder="WORKSHOP"></label></div>
-        <label>Story or link-sticker URL <span class="optional">optional</span><input name="story_url" type="url" maxlength="2000" placeholder="https://…"></label>
-        <p class="field-help">Add at least a story ID, a URL, or a keyword.</p><div class="form-actions"><label class="switch-label"><input type="checkbox" name="enabled" checked><span class="switch"></span>On</label><button class="button primary">Add story rule</button></div>
+      ${settings.storyRules.length < MAX_STORY_RULES ? `<details class="dm-add-story"><summary>إضافة قاعدة قصة</summary><form action="/admin/story-rules" method="post" class="stack dm-new-story-form">
+        <input type="hidden" name="action" value="save"><div class="two-fields"><label>اسم القاعدة<input name="label" required maxlength="80" placeholder="قصة الورشة"></label><label>الرد<select name="reply">${replyOptions(options, defaultReply)}</select></label></div>
+        <div class="two-fields"><label>معرّف القصة <span class="optional">اختياري</span><input name="story_id" maxlength="40" inputmode="numeric" pattern="[0-9]*" placeholder="من قسم النشاط"></label><label>الكلمة المفتاحية <span class="optional">اختياري</span><input name="keyword" maxlength="80" placeholder="WORKSHOP"></label></div>
+        <label>رابط القصة أو ملصق الرابط <span class="optional">اختياري</span><input name="story_url" type="url" maxlength="2000" placeholder="https://…"></label>
+        <p class="field-help">أضف معرّف قصة أو رابطًا أو كلمة مفتاحية على الأقل.</p><div class="form-actions"><label class="switch-label"><input type="checkbox" name="enabled" checked><span class="switch"></span>مفعّل</label><button class="button primary">إضافة قاعدة القصة</button></div>
       </form></details>` : ""}
       </div>
     </section>
     <section class="setting dm-feature dm-flow-links" aria-labelledby="dm-links-title" data-dm-link-username="${esc(canBuildLinks ? normalizedUsername : "")}">
-      <div class="setting-intro"><h3 id="dm-links-title">Links to your DMs</h3><p>Links that open a chat with a specific reply. Add a source to see where people came from.</p>${canBuildLinks ? `<p class="field-help">@${esc(normalizedUsername)}</p>` : ""}</div>
+      <div class="setting-intro"><h3 id="dm-links-title">روابط المحادثات</h3><p>روابط تفتح محادثة برد محدد. أضف مصدرًا لمعرفة من أين وصل العملاء.</p>${canBuildLinks ? `<p class="field-help">@${esc(normalizedUsername)}</p>` : ""}</div>
       <div class="setting-body">
-      <label class="dm-link-source">Source <span class="optional">optional</span><input id="dm-link-source" value="website" maxlength="80" pattern="[A-Za-z0-9_\\-]{1,80}" placeholder="website" aria-describedby="dm-link-source-help"><span class="field-help" id="dm-link-source-help">Letters, numbers, hyphens and underscores, like website or newsletter.</span></label>
+      <label class="dm-link-source">المصدر <span class="optional">اختياري</span><input id="dm-link-source" value="website" maxlength="80" pattern="[A-Za-z0-9_\\-]{1,80}" placeholder="website" aria-describedby="dm-link-source-help"><span class="field-help" id="dm-link-source-help">حروف إنجليزية وأرقام وشرطات، مثل website أو newsletter.</span></label>
       ${canBuildLinks
         ? options.length
-          ? `<div class="dm-links-list">${options.map((option, index) => `<div class="dm-link-row"><label for="dm-link-${index}">${esc(option.label)}</label><input id="dm-link-${index}" data-reply-key="${esc(option.key)}" value="${esc(buildReplyLink(normalizedUsername, option.key, "website"))}" readonly aria-label="${esc(option.label)} DM link"><button type="button" class="button secondary" data-copy-dm-link="dm-link-${index}">Copy<span class="sr-only"> ${esc(option.label)} link</span></button></div>`).join("")}</div>`
-          : '<p class="dm-empty">Add an automation or custom reply to get links.</p>'
-        : '<p class="notice">Check your Instagram connection, or set OWNER_IG_USERNAME, to load links for your account.</p>'}
-      <p id="dm-link-feedback" class="field-help" role="status" aria-live="polite"></p><p class="field-help">Opens Instagram on mobile. New chats start after a message or button tap.</p>
+          ? `<div class="dm-links-list">${options.map((option, index) => `<div class="dm-link-row"><label for="dm-link-${index}">${esc(option.label)}</label><input id="dm-link-${index}" data-reply-key="${esc(option.key)}" value="${esc(buildReplyLink(normalizedUsername, option.key, "website"))}" readonly aria-label="${esc(option.label)} رابط المحادثة"><button type="button" class="button secondary" data-copy-dm-link="dm-link-${index}">نسخ<span class="sr-only"> ${esc(option.label)}</span></button></div>`).join("")}</div>`
+          : '<p class="dm-empty">أضف أتمتة أو ردًا مخصصًا لإنشاء الروابط.</p>'
+        : '<p class="notice">افحص اتصال إنستغرام أو اضبط OWNER_IG_USERNAME لعرض روابط الحساب.</p>'}
+      <p id="dm-link-feedback" class="field-help" role="status" aria-live="polite"></p><p class="field-help">يفتح إنستغرام على الهاتف. تبدأ المحادثة بعد إرسال رسالة أو الضغط على زر.</p>
       </div>
     </section>
   </section>`;
@@ -126,29 +126,29 @@ export function renderDmFeaturesPanel(data: {
 
 function customReplies(replies: CustomReply[]): string {
   return `<section class="setting dm-feature dm-custom-section" aria-labelledby="dm-custom-title">
-    <div class="setting-intro"><h3 id="dm-custom-title">Custom replies</h3><p>Plain text replies for starters, story rules and DM links that don’t belong to an automation.</p><p class="field-help">${replies.length} of ${MAX_CUSTOM_REPLIES} used.</p></div>
+    <div class="setting-intro"><h3 id="dm-custom-title">الردود المخصصة</h3><p>ردود نصية لأزرار المحادثة وقواعد القصص والروابط، مستقلة عن الأتمتة.</p><p class="field-help">المستخدم: ${replies.length} من ${MAX_CUSTOM_REPLIES}.</p></div>
     <div class="setting-body">
-    ${replies.length ? `<div class="dm-custom-list">${replies.map((reply) => `<details class="dm-custom"><summary><strong>${esc(reply.label)}</strong><span>${esc(reply.text.length > 140 ? `${reply.text.slice(0, 137)}…` : reply.text)}</span></summary>
-      <form action="/admin/custom-replies" method="post" class="stack"><input type="hidden" name="id" value="${esc(reply.id)}"><label>Name<input name="label" value="${esc(reply.label)}" maxlength="80" required></label><label>Message<textarea name="text" rows="3" maxlength="1000" required>${esc(reply.text)}</textarea></label>
-      <div class="form-actions"><span class="dm-reply-key">text-${esc(reply.id)}</span><div><button class="button danger" name="action" value="delete" formnovalidate data-confirm="Delete this custom reply?">Delete</button><button class="button primary" name="action" value="save">Save reply</button></div></div></form></details>`).join("")}</div>` : '<p class="dm-empty">No custom replies yet.</p>'}
-    ${replies.length < MAX_CUSTOM_REPLIES ? `<details class="dm-add-story"><summary>Add a custom reply</summary><form action="/admin/custom-replies" method="post" class="stack dm-new-story-form">
-      <input type="hidden" name="action" value="save"><label>Name<input name="label" required maxlength="80" placeholder="Ask a question"></label><label>Message<textarea name="text" rows="3" maxlength="1000" required placeholder="Send your question here and I will reply soon."></textarea></label>
-      <div class="form-actions"><span class="field-help">Up to 1,000 characters.</span><button class="button primary">Add custom reply</button></div>
+    ${replies.length ? `<div class="dm-custom-list">${replies.map((reply) => `<details class="dm-custom"><summary><strong translate="no">${esc(reply.label)}</strong><span translate="no">${esc(reply.text.length > 140 ? `${reply.text.slice(0, 137)}…` : reply.text)}</span></summary>
+      <form action="/admin/custom-replies" method="post" class="stack"><input type="hidden" name="id" value="${esc(reply.id)}"><label>الاسم<input name="label" value="${esc(reply.label)}" maxlength="80" required></label><label>الرسالة<textarea name="text" rows="3" maxlength="1000" required>${esc(reply.text)}</textarea></label>
+      <div class="form-actions"><span class="dm-reply-key">text-${esc(reply.id)}</span><div><button class="button danger" name="action" value="delete" formnovalidate data-confirm="هل تريد حذف هذا الرد المخصص؟">حذف</button><button class="button primary" name="action" value="save">حفظ الرد</button></div></div></form></details>`).join("")}</div>` : '<p class="dm-empty">لا توجد ردود مخصصة بعد.</p>'}
+    ${replies.length < MAX_CUSTOM_REPLIES ? `<details class="dm-add-story"><summary>إضافة رد مخصص</summary><form action="/admin/custom-replies" method="post" class="stack dm-new-story-form">
+      <input type="hidden" name="action" value="save"><label>الاسم<input name="label" required maxlength="80" placeholder="اسأل سؤالًا"></label><label>الرسالة<textarea name="text" rows="3" maxlength="1000" required placeholder="أرسل سؤالك هنا وسنرد عليك قريبًا."></textarea></label>
+      <div class="form-actions"><span class="field-help">حتى 1,000 حرف.</span><button class="button primary">إضافة الرد المخصص</button></div>
     </form></details>` : ""}
     </div>
   </section>`;
 }
 
 function storyRules(rules: StoryRule[], options: ReplyOption[]): string {
-  if (!rules.length) return '<p class="dm-empty">No story rules yet.</p>';
-  return `<div class="table-scroll"><table class="dm-story-table"><thead><tr><th>Rule</th><th>Story</th><th>Keyword</th><th>Reply</th><th>On</th><th>Actions</th></tr></thead><tbody>${rules.map((rule, index) => {
+  if (!rules.length) return '<p class="dm-empty">لا توجد قواعد قصص بعد.</p>';
+  return `<div class="table-scroll"><table class="dm-story-table"><thead><tr><th>القاعدة</th><th>القصة</th><th>الكلمة المفتاحية</th><th>الرد</th><th>مفعّل</th><th>الإجراءات</th></tr></thead><tbody>${rules.map((rule, index) => {
     const formId = `dm-story-rule-${index}`;
-    return `<tr><td data-column="Rule"><form action="/admin/story-rules" method="post" id="${formId}"><input type="hidden" name="id" value="${esc(rule.id)}"><input name="label" value="${esc(rule.label)}" maxlength="80" required aria-label="Rule name"></form></td>
-      <td data-column="Story"><div class="dm-story-target"><input name="story_id" maxlength="40" form="${formId}" value="${esc(rule.storyId)}" pattern="[0-9]*" inputmode="numeric" placeholder="Any story · add ID" aria-label="Story ID"><input name="story_url" form="${formId}" value="${esc(rule.storyUrl)}" type="url" maxlength="2000" placeholder="Story or link-sticker URL" aria-label="Story or link-sticker URL"></div></td>
-      <td data-column="Keyword"><input name="keyword" form="${formId}" value="${esc(rule.keyword)}" maxlength="80" placeholder="Any reply" aria-label="Story reply keyword"></td>
-      <td data-column="Reply"><select name="reply" form="${formId}" aria-label="Story response">${replyOptions(options, rule.reply)}</select></td>
-      <td data-column="On"><label class="switch-label dm-table-switch"><input type="checkbox" name="enabled" form="${formId}" ${rule.enabled ? "checked" : ""}><span class="switch"></span><span class="sr-only">Turn on ${esc(rule.label)}</span></label></td>
-      <td data-column="Actions"><div class="dm-story-actions"><button class="button secondary" name="action" value="save" form="${formId}">Save</button><button class="button danger" name="action" value="delete" form="${formId}" formnovalidate data-confirm="Delete this story rule?">Delete</button></div></td></tr>`;
+    return `<tr><td data-column="القاعدة"><form action="/admin/story-rules" method="post" id="${formId}"><input type="hidden" name="id" value="${esc(rule.id)}"><input name="label" value="${esc(rule.label)}" maxlength="80" required aria-label="اسم القاعدة"></form></td>
+      <td data-column="القصة"><div class="dm-story-target"><input name="story_id" maxlength="40" form="${formId}" value="${esc(rule.storyId)}" pattern="[0-9]*" inputmode="numeric" placeholder="أي قصة · أضف معرّفًا" aria-label="معرّف القصة"><input name="story_url" form="${formId}" value="${esc(rule.storyUrl)}" type="url" maxlength="2000" placeholder="رابط القصة أو ملصق الرابط" aria-label="رابط القصة أو ملصق الرابط"></div></td>
+      <td data-column="الكلمة المفتاحية"><input name="keyword" form="${formId}" value="${esc(rule.keyword)}" maxlength="80" placeholder="أي رد" aria-label="الكلمة المفتاحية لرد القصة"></td>
+      <td data-column="الرد"><select name="reply" form="${formId}" aria-label="رد القصة">${replyOptions(options, rule.reply)}</select></td>
+      <td data-column="مفعّل"><label class="switch-label dm-table-switch"><input type="checkbox" name="enabled" form="${formId}" ${rule.enabled ? "checked" : ""}><span class="switch"></span><span class="sr-only">تفعيل ${esc(rule.label)}</span></label></td>
+      <td data-column="الإجراءات"><div class="dm-story-actions"><button class="button secondary" name="action" value="save" form="${formId}">حفظ</button><button class="button danger" name="action" value="delete" form="${formId}" formnovalidate data-confirm="هل تريد حذف قاعدة القصة؟">حذف</button></div></td></tr>`;
   }).join("")}</tbody></table></div>`;
 }
 
@@ -164,12 +164,12 @@ export type DmMessageContext = {
 };
 
 const SOURCE_NAMES: Record<string, string> = {
-  dm: "Direct message",
-  starter: "Conversation starter",
-  story_reply: "Story reply",
-  story_mention: "Story mention",
-  referral: "DM link",
-  postback: "Button tap"
+  dm: "رسالة خاصة",
+  starter: "زر بدء محادثة",
+  story_reply: "رد على قصة",
+  story_mention: "إشارة في قصة",
+  referral: "رابط المحادثة",
+  postback: "ضغطة زر"
 };
 
 /** Where an incoming DM came from, shown under each DM in the activity list. */
@@ -178,18 +178,18 @@ export function renderDmMessageContext(row: DmMessageContext): string {
   if (row.source) parts.push(`<span>${esc(SOURCE_NAMES[row.source] ?? row.source.replace(/_/g, " "))}</span>`);
   if (row.referral_ref) {
     const source = parseReplyRef(row.referral_ref)?.source ?? null;
-    parts.push(`<span>Link source: ${esc(source ?? row.referral_ref)}</span>`);
+    parts.push(`<span>مصدر الرابط: ${esc(source ?? row.referral_ref)}</span>`);
   }
-  if (row.is_follower === 1) parts.push('<span class="dm-follower">Follows you</span>');
-  else if (row.is_follower === 0) parts.push("<span>Doesn’t follow you</span>");
-  else if (row.profile_checked_at || row.profile_error) parts.push("<span>Follower status unavailable</span>");
-  if (row.story_id) parts.push(`<span class="dm-story-id">Story ID: ${esc(row.story_id)}</span>`);
+  if (row.is_follower === 1) parts.push('<span class="dm-follower">يتابعك</span>');
+  else if (row.is_follower === 0) parts.push("<span>لا يتابعك</span>");
+  else if (row.profile_checked_at || row.profile_error) parts.push("<span>حالة المتابعة غير متاحة</span>");
+  if (row.story_id) parts.push(`<span class="dm-story-id">معرّف القصة: ${esc(row.story_id)}</span>`);
   const link = row.story_link_url || row.story_url;
   if (link) {
     try {
       const url = new URL(link);
       if (url.protocol === "https:" && !url.username && !url.password) {
-        parts.push(`<a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${row.story_link_url ? "Story link sticker" : "Story media"} ↗</a>`);
+        parts.push(`<a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${row.story_link_url ? "ملصق رابط القصة" : "وسائط القصة"} ↗</a>`);
       }
     } catch { /* Omit malformed activity links. */ }
   }
@@ -202,7 +202,7 @@ export const dmFeaturesClientScript = `
   const publish = document.querySelector('[data-publish-starters]');
   const publishHelp = document.getElementById('dm-publish-help');
   if (form && publish && !publish.disabled) {
-    const markUnsaved = () => { publish.disabled = true; publishHelp.textContent = 'Save your changes before publishing.'; };
+    const markUnsaved = () => { publish.disabled = true; publishHelp.textContent = 'احفظ التعديلات قبل النشر.'; };
     form.addEventListener('input', markUnsaved);
     form.addEventListener('change', markUnsaved);
   }
@@ -219,7 +219,7 @@ export const dmFeaturesClientScript = `
     const value = source.value.trim() || 'website';
     const valid = /^[A-Za-z0-9_-]{1,80}$/.test(value);
     source.setAttribute('aria-invalid', String(!valid));
-    feedback.textContent = valid ? '' : 'Use letters, numbers, hyphens, or underscores for the source.';
+    feedback.textContent = valid ? '' : 'استخدم حروفًا إنجليزية أو أرقامًا أو شرطات للمصدر.';
     copyButtons.forEach(button => { button.disabled = !valid; });
     linkInputs.forEach(input => {
       input.value = valid ? 'https://ig.me/' + encodeURIComponent(panel.dataset.dmLinkUsername) + '?ref=' + input.dataset.replyKey + '__' + value : '';
@@ -228,8 +228,8 @@ export const dmFeaturesClientScript = `
   copyButtons.forEach(button => button.addEventListener('click', async () => {
     const input = document.getElementById(button.dataset.copyDmLink);
     if (!input || !input.value) return;
-    try { await navigator.clipboard.writeText(input.value); feedback.textContent = 'Link copied.'; }
-    catch { input.focus(); input.select(); feedback.textContent = 'Link selected. Copy it with your keyboard.'; }
+    try { await navigator.clipboard.writeText(input.value); feedback.textContent = 'تم نسخ الرابط.'; }
+    catch { input.focus(); input.select(); feedback.textContent = 'تم تحديد الرابط. انسخه باستخدام لوحة المفاتيح.'; }
   }));
 })();
 `;
@@ -245,10 +245,10 @@ export const dmFeaturesStyles = `
 #dm-publish-form{margin:0}
 .dm-tools button:disabled{opacity:.45;cursor:not-allowed}
 .dm-story-table{min-width:760px}
-.dm-story-table th{padding-right:10px}
-.dm-story-table td{padding:10px 10px 10px 0;white-space:normal}
+.dm-story-table th{padding-inline-end:10px}
+.dm-story-table td{padding-block:10px;padding-inline:0 10px;white-space:normal}
 .dm-story-table input,.dm-story-table select{font-size:13px;padding:6px 8px}
-.dm-story-table select{padding-right:26px}
+.dm-story-table select{padding-inline-end:26px}
 .dm-story-target{display:grid;gap:6px}
 .dm-story-actions{display:flex;gap:4px}
 .dm-story-actions .button{height:30px;padding:0 10px;font-size:12.5px}

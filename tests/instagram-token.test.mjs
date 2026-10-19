@@ -125,13 +125,13 @@ test("expired or revoked tokens require reconnect without falling back to the se
   assert.equal(revoked.needsReconnect, true);
   assert.equal(revoked.nextRefreshAt, null);
   assert.equal(JSON.stringify(revoked).includes(h.env.INSTAGRAM_ACCESS_TOKEN), false);
-  await assert.rejects(token.getInstagramAccessToken(h.env, NOW + 3 * DAY), /Reconnect/);
+  await assert.rejects(token.getInstagramAccessToken(h.env, NOW + 3 * DAY), /أعد ربط/);
   await h.db.prepare("UPDATE instagram_tokens SET needs_reconnect = 0, safe_error = NULL").run();
   const expired = await token.getInstagramTokenStatus(h.env, NOW + 62 * DAY);
   assert.equal(expired.state, "reconnect");
-  assert.match(expired.error, /expired/);
+  assert.match(expired.error, /انتهت صلاحية/);
   const calls = h.calls.length;
-  await assert.rejects(token.getInstagramAccessToken(h.env, NOW + 62 * DAY), /expired/);
+  await assert.rejects(token.getInstagramAccessToken(h.env, NOW + 62 * DAY), /انتهت صلاحية/);
   await token.maintainInstagramAccessToken(h.env, NOW + 62 * DAY);
   assert.equal(h.calls.length, calls, "Known expired credentials are never sent back to Meta");
 });
@@ -184,16 +184,16 @@ test("wrong-account credentials are blocked before renewal", async (t) => {
   h.setResponder(() => Response.json({ user_id: "another-instagram-account", username: "someone_else" }));
   const status = await token.maintainInstagramAccessToken(h.env, NOW);
   assert.equal(status.state, "reconnect");
-  assert.match(status.error, /different Instagram account/);
+  assert.match(status.error, /حساب إنستغرام مختلف/);
   assert.equal(refreshCalls(h).length, 0);
-  await assert.rejects(token.getInstagramAccessToken(h.env, NOW), /different Instagram account/);
+  await assert.rejects(token.getInstagramAccessToken(h.env, NOW), /حساب إنستغرام مختلف/);
 });
 
 test("corrupted encrypted state cannot silently fall back to a stale bootstrap secret", async (t) => {
   const h = await fixture(t);
   await token.maintainInstagramAccessToken(h.env, NOW);
   await h.db.prepare("UPDATE instagram_tokens SET token_ciphertext = 'v1.invalid.invalid'").run();
-  await assert.rejects(token.getInstagramAccessToken(h.env, NOW), /could not be read/);
+  await assert.rejects(token.getInstagramAccessToken(h.env, NOW), /قراءة رمز الوصول المحفوظ/);
   const calls = h.calls.length;
   const status = await token.maintainInstagramAccessToken(h.env, NOW + DAY);
   assert.equal(status.state, "reconnect");
@@ -209,7 +209,7 @@ test("renewal rejects nonofficial API hosts and redacts transport errors", async
   h.setResponder(() => { throw new Error(`Sensitive transport failure: ${h.env.INSTAGRAM_ACCESS_TOKEN}`); });
   const unavailable = await token.maintainInstagramAccessToken(h.env, NOW + DAY);
   assert.equal(unavailable.state, "error");
-  assert.match(unavailable.error, /could not be reached/);
+  assert.match(unavailable.error, /تعذّر الاتصال/);
   assert.equal(JSON.stringify(unavailable).includes(h.env.INSTAGRAM_ACCESS_TOKEN), false);
 });
 
@@ -222,7 +222,7 @@ test("a transient check failure cannot re-enable a token already rejected by Met
   const failedCheck = await token.maintainInstagramAccessToken(h.env, NOW + DAY);
   assert.equal(failedCheck.needsReconnect, true);
   assert.equal(failedCheck.error, rejected.error);
-  await assert.rejects(token.getInstagramAccessToken(h.env, NOW + DAY), /Reconnect/);
+  await assert.rejects(token.getInstagramAccessToken(h.env, NOW + DAY), /أعد ربط/);
   h.setResponder(() => Response.json({ user_id: h.env.IG_USER_ID, username: "test_owner" }));
   const recovered = await token.maintainInstagramAccessToken(h.env, NOW + DAY + 1);
   assert.equal(recovered.state, "healthy");
@@ -235,7 +235,7 @@ test("an overdue daily check is visible without disabling a token with time left
   await token.maintainInstagramAccessToken(h.env, NOW);
   const overdue = await token.getInstagramTokenStatus(h.env, NOW + 4 * DAY);
   assert.equal(overdue.state, "error");
-  assert.match(overdue.error, /overdue/);
+  assert.match(overdue.error, /تأخر/);
   assert.equal(overdue.needsReconnect, false);
   assert.equal(await token.getInstagramAccessToken(h.env, NOW + 4 * DAY), h.env.INSTAGRAM_ACCESS_TOKEN);
 });
@@ -251,7 +251,7 @@ test("Graph redirects are rejected without forwarding credentials or exposing th
   h.setResponder(() => new Response(null, { status: 302, headers: { location: destination } }));
   const status = await token.maintainInstagramAccessToken(h.env, NOW);
   assert.equal(status.state, "error");
-  assert.match(status.error, /unexpected redirect/);
+  assert.match(status.error, /توجيه.*غير متوقع/);
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].url.hostname, "graph.instagram.com");
   assert.equal(JSON.stringify(status).includes(destination), false);

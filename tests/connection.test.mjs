@@ -27,7 +27,7 @@ test("an admin can verify the account and view renewal dates without exposing th
   const cookie = await h.login();
   const checked = await h.postForm("/admin/connection/check", {}, cookie);
   assert.equal(checked.status, 303);
-  assert.equal(checked.headers.get("location"), "/admin#connection");
+  assert.equal(checked.headers.get("location"), "/admin/advanced#connection");
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].method, "GET");
   assert.equal(h.calls[0].url.pathname, "/v25.0/me");
@@ -40,9 +40,9 @@ test("an admin can verify the account and view renewal dates without exposing th
   assert.equal(status.username, "test_owner");
   assert.ok(Date.parse(status.nextRefreshAt) > Date.now() + 24 * 60 * 60 * 1000);
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
-  assert.match(html, /Instagram connection/);
-  assert.match(html, /Connected/);
-  assert.match(html, /Next renewal/);
+  assert.match(html, /الاتصال بإنستغرام/);
+  assert.match(html, /متصل/);
+  assert.match(html, /التجديد القادم/);
   assert.equal(html.includes(h.env.INSTAGRAM_ACCESS_TOKEN), false);
   assert.equal(h.calls.length, 1, "Reading the dashboard must not make additional Meta requests");
   assert.equal(h.logs.some((line) => line.includes(h.env.INSTAGRAM_ACCESS_TOKEN)), false);
@@ -56,7 +56,7 @@ test("test mode disables manual and scheduled token checks", async (t) => {
   await built.worker.scheduled({ scheduledTime: Date.now(), cron: "0 6 * * *" }, h.env);
   assert.equal(h.calls.length, 0);
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
-  assert.match(html, /Connection checks and token renewal are off in test mode/);
+  assert.match(html, /فحص الاتصال وتجديد رمز الوصول متوقفان في وضع الاختبار/);
 });
 
 test("missing Instagram credentials show a setup message instead of failing the dashboard", async (t) => {
@@ -65,7 +65,7 @@ test("missing Instagram credentials show a setup message instead of failing the 
   const cookie = await h.login();
   const response = await h.request("/admin", { headers: { cookie } });
   assert.equal(response.status, 200);
-  assert.match(await response.text(), /Set the INSTAGRAM_ACCESS_TOKEN and IG_USER_ID secrets/);
+  assert.match(await response.text(), /اضبط INSTAGRAM_ACCESS_TOKEN وIG_USER_ID/);
   assert.equal((await h.postForm("/admin/connection/check", {}, cookie)).status, 303);
   assert.equal(h.calls.length, 0);
 });

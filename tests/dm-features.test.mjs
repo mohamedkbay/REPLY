@@ -188,8 +188,8 @@ test("reply usage lists the starters and story rules that point at a reply", () 
   const settings = structuredClone(features.DEFAULT_DM_FEATURE_SETTINGS);
   settings.starters = STARTERS;
   settings.storyRules = [{ id: "s1", label: "Workshop story", storyId: "123", storyUrl: "", keyword: "", reply: "rule-1", enabled: true }];
-  assert.deepEqual(features.replyUsage(settings, "rule-1"), ["conversation starter “Get the free guide”", "story rule “Workshop story”"]);
-  assert.deepEqual(features.replyUsage(settings, "text-ask"), ["conversation starter “Ask a question”"]);
+  assert.deepEqual(features.replyUsage(settings, "rule-1"), ["زر المحادثة «Get the free guide»", "قاعدة القصة «Workshop story»"]);
+  assert.deepEqual(features.replyUsage(settings, "text-ask"), ["زر المحادثة «Ask a question»"]);
   assert.deepEqual(features.replyUsage(settings, "rule-2"), []);
 });
 
@@ -216,11 +216,11 @@ test("missing follow status and profile failures stay unknown, and errors never 
   const missing = await features.lookupInstagramProfile(h.env, "100002", NOW);
   assert.equal(missing.username, "demo_reader");
   assert.equal(missing.isFollower, null);
-  assert.match(missing.error, /did not return/);
+  assert.match(missing.error, /لم يُرجع/);
   h.setResponder(() => Response.json({ error: { code: 200, message: h.env.INSTAGRAM_ACCESS_TOKEN } }, { status: 403 }));
   const failed = await features.lookupInstagramProfile(h.env, "100002", NOW + 5 * 60 * 1000);
   assert.equal(failed.isFollower, null);
-  assert.match(failed.error, /permissions/);
+  assert.match(failed.error, /صلاحيات/);
   assert.equal(JSON.stringify(failed).includes(h.env.INSTAGRAM_ACCESS_TOKEN), false);
   assert.equal(h.query("SELECT is_follower FROM instagram_profiles WHERE sender_id = '100002'").is_follower, null);
 });
@@ -291,7 +291,7 @@ test("unconfirmed starter writes and failed verification cannot show a successfu
   h.setResponder((call) => Response.json(call.method === "POST" ? { success: true } : { data: [] }));
   const mismatch = await features.publishIceBreakers(h.env, undefined, NOW + 1000);
   assert.equal(mismatch.state, "error");
-  assert.match(mismatch.error, /not returned the updated starters/);
+  assert.match(mismatch.error, /لم يظهر تحديث الأزرار/);
 });
 
 test("overlapping starter publishes share a lease and issue only one mutation", async (t) => {
@@ -331,12 +331,12 @@ test("profile requests reject redirects and nonofficial hosts without exposing c
   h.setResponder(() => new Response(null, { status: 302, headers: { location: `https://untrusted.example/${h.env.INSTAGRAM_ACCESS_TOKEN}` } }));
   const redirected = await features.lookupInstagramProfile(h.env, "100003", NOW);
   assert.equal(redirected.isFollower, null);
-  assert.match(redirected.error, /unexpected redirect/);
+  assert.match(redirected.error, /توجيه.*غير متوقع/);
   assert.equal(h.calls.length, 1);
   assert.equal(JSON.stringify(redirected).includes(h.env.INSTAGRAM_ACCESS_TOKEN), false);
   const badHost = await features.lookupInstagramProfile({ ...h.env, GRAPH_API_BASE: "https://untrusted.example/v25.0" }, "100004", NOW);
   assert.equal(badHost.isFollower, null);
-  assert.match(badHost.error, /official/);
+  assert.match(badHost.error, /الرسمي/);
   assert.equal(h.calls.length, 1);
 });
 

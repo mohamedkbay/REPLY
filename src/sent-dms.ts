@@ -1,9 +1,17 @@
+import { appearanceHead, appearanceStyles } from "./appearance";
+import { productImagePath } from "./product-images";
+import { PLATFORM_NAMES, type Platform } from "./accounts";
+import { REPLY_TOPICS } from "./smart-replies";
 import { parseReplyRef } from "./dm-features";
 import { isBasicallyKeyword } from "./keyword-match";
-import { baseStyles, headerStyles, PRODUCT_NAME, renderHeader } from "./theme";
+import { baseStyles, headerStyles, PRODUCT_NAME, renderHeader, renderFooter } from "./theme";
 
 // The Sent DMs page (/admin/sent) and the dashboard's Recent DMs list.
 export type SentDmRow = {
+  platform?: Platform;
+  account_name?: string | null;
+  reply_text?: string | null;
+  reply_image_id?: string | null;
   kind: "comment" | "dm";
   id: string;
   username: string | null;
@@ -37,7 +45,7 @@ export async function getSentDms(db: D1Database, limit = SENT_DMS_LIMIT): Promis
     `SELECT * FROM (
        SELECT 'comment' AS kind, comment_id AS id, username, NULL AS sender_id, comment_text AS trigger_text,
          matched_keyword, NULL AS rule_keywords, rule_label AS reply_label, 'comment' AS source,
-         NULL AS quick_reply_payload, NULL AS referral_ref, status, error, received_at, sent_at
+         NULL AS quick_reply_payload, NULL AS referral_ref, status, error, received_at, sent_at, 'instagram' AS platform, NULL AS account_name, NULL AS reply_text, NULL AS reply_image_id
        FROM comment_events
        WHERE +status IN ('sent', 'sent_public_reply_error', 'send_error')
        ORDER BY received_at DESC LIMIT ?
@@ -45,7 +53,7 @@ export async function getSentDms(db: D1Database, limit = SENT_DMS_LIMIT): Promis
      UNION ALL
      SELECT * FROM (
        SELECT 'dm', m.message_id, m.sender_username, m.sender_id, m.message_text, NULL, r.keywords, m.matched_choice,
-         m.source, m.quick_reply_payload, m.referral_ref, m.status, m.error, m.received_at, m.sent_at
+         m.source, m.quick_reply_payload, m.referral_ref, m.status, m.error, m.received_at, m.sent_at, 'instagram', NULL, NULL, m.reply_image_id
        FROM (
          SELECT * FROM message_events
          WHERE +status IN ('sent', 'send_error')
@@ -53,8 +61,16 @@ export async function getSentDms(db: D1Database, limit = SENT_DMS_LIMIT): Promis
        ) m
        LEFT JOIN rules r ON m.reply_key LIKE 'rule-%' AND r.id = CAST(substr(m.reply_key, 6) AS INTEGER)
      )
+     UNION ALL
+     SELECT * FROM (
+       SELECT 'dm', e.account_id || ':' || e.event_id, NULL, e.sender_id, e.text, NULL, NULL, e.reply_key,
+         'dm', NULL, NULL, CASE WHEN e.status = 'error' THEN 'send_error' ELSE e.status END, e.error,
+         e.received_at, CASE WHEN e.status = 'sent' THEN e.received_at ELSE NULL END, a.platform, a.display_name, e.reply_text, e.reply_image_id
+       FROM (SELECT * FROM channel_events WHERE +status IN ('sent', 'error') ORDER BY received_at DESC LIMIT ?) e
+       JOIN connected_accounts a ON a.id = e.account_id
+     )
      ORDER BY received_at DESC LIMIT ?`
-  ).bind(limit, limit, limit).all<SentDmRow>();
+  ).bind(limit, limit, limit, limit).all<SentDmRow>();
   return result.results;
 }
 
@@ -64,10 +80,12 @@ export async function getSentDmSummary(db: D1Database, now: Date): Promise<SentD
   const row = await db.prepare(
     `SELECT
        (SELECT COUNT(*) FROM comment_events WHERE received_at >= ? AND +status IN ('sent', 'sent_public_reply_error')) +
-       (SELECT COUNT(*) FROM message_events WHERE received_at >= ? AND +status = 'sent') AS sent,
+       (SELECT COUNT(*) FROM message_events WHERE received_at >= ? AND +status = 'sent') +
+       (SELECT COUNT(*) FROM channel_events WHERE received_at >= ? AND +status = 'sent') AS sent,
        (SELECT COUNT(*) FROM comment_events WHERE received_at >= ? AND +status = 'send_error') +
-       (SELECT COUNT(*) FROM message_events WHERE received_at >= ? AND +status = 'send_error') AS failed`
-  ).bind(since, since, since, since).first<SentDmSummary>();
+       (SELECT COUNT(*) FROM message_events WHERE received_at >= ? AND +status = 'send_error') +
+       (SELECT COUNT(*) FROM channel_events WHERE received_at >= ? AND +status = 'error') AS failed`
+  ).bind(since, since, since, since, since, since).first<SentDmSummary>();
   return row ?? { sent: 0, failed: 0 };
 }
 
@@ -112,52 +130,57 @@ function matchedKeyword(row: SentDmRow): string | null {
 }
 
 function who(row: SentDmRow): string {
+  if (row.platform && row.platform !== "instagram") return `<strong class="who">عميل ${PLATFORM_NAMES[row.platform]} …${esc((row.sender_id ?? "").slice(-4))}</strong>`;
   const handle = row.username?.replace(/^@/, "") ?? "";
   if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) {
     return `<a class="who" href="https://www.instagram.com/${handle}/" target="_blank" rel="noopener noreferrer">@${esc(handle)}</a>`;
   }
   if (handle) return `<strong class="who">@${esc(handle)}</strong>`;
-  return `<strong class="who">Instagram user …${esc((row.sender_id ?? "").slice(-4))}</strong>`;
+  return `<strong class="who">مستخدم إنستغرام …${esc((row.sender_id ?? "").slice(-4))}</strong>`;
 }
 
 function trigger(row: SentDmRow): string {
   switch (row.source) {
-    case "comment": return "commented";
-    case "starter": return "tapped a conversation starter";
-    case "postback": return "tapped a button";
-    case "story_reply": return "replied to your story";
-    case "story_mention": return "mentioned you in a story";
+    case "comment": return "علّق";
+    case "starter": return "ضغط زر بدء محادثة";
+    case "postback": return "ضغط زرًا";
+    case "story_reply": return "رد على قصتك";
+    case "story_mention": return "أشار إليك في قصة";
     case "referral": {
       const source = parseReplyRef(row.referral_ref)?.source;
-      return source ? `opened your DM link from ${source}` : "opened your DM link";
+      return source ? `فتح رابط المحادثة من ${source}` : "فتح رابط المحادثة";
     }
-    default: return row.quick_reply_payload ? "tapped a reply button" : "messaged you";
+    default: return row.quick_reply_payload ? "ضغط زر رد" : "أرسل لك رسالة";
   }
 }
 
-const REPLY_NAMES: Record<string, string> = { "Fallback rule": "the fallback reply (KEYWORD)" };
+const REPLY_NAMES: Record<string, string> = { "Fallback rule": "الرد الاحتياطي" };
 
 function sentRow(row: SentDmRow): string {
   const key = `${row.kind}:${row.id}`;
   const failed = row.status === "send_error";
   const keyword = matchedKeyword(row);
   const { html: said, partialWord } = highlightKeyword(row.trigger_text, keyword);
-  const reply = REPLY_NAMES[row.reply_label ?? ""] ?? row.reply_label ?? "a reply";
+  const topic = row.reply_label?.startsWith("business:") ? REPLY_TOPICS.find(item => `business:${item.id}` === row.reply_label)?.title : null;
+  const reply = topic ?? (row.reply_label?.startsWith("catalog:") ? "رد المنتج" : REPLY_NAMES[row.reply_label ?? ""] ?? row.reply_label ?? "رد");
   const time = new Date(row.sent_at ?? row.received_at);
   const iso = Number.isNaN(time.getTime()) ? row.received_at : time.toISOString();
-  const fallbackTime = Number.isNaN(time.getTime()) ? row.received_at : `${time.toLocaleString("en-US", {
+  const fallbackTime = Number.isNaN(time.getTime()) ? row.received_at : `${time.toLocaleString("ar-LY", {
     month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC"
   })} UTC`;
-  const search = [row.username ?? "", row.trigger_text, reply].join(" ").toLowerCase();
+  const search = [row.username ?? "", row.trigger_text, row.account_name ?? "", row.reply_text ?? "", reply].join(" ").toLowerCase();
   return `<article class="dm-row" data-id="${esc(key)}" data-key="${esc(`${key}:${row.status}`)}" data-kind="${row.kind}" data-failed="${failed ? 1 : 0}" data-search="${esc(search)}">
     <time datetime="${esc(iso)}">${esc(fallbackTime)}</time>
     <div class="dm-main">
-      <div class="dm-line">${who(row)}<span class="why">${esc(trigger(row))}</span>${keyword ? `<span class="keyword">matched ${esc(keyword.toUpperCase())}</span>` : ""}${partialWord ? `<span class="partial" title="The keyword matched inside a longer word. Automations now need the whole word.">inside “${esc(partialWord)}”</span>` : ""}</div>
+      <div class="dm-line">${who(row)}<span class="why">${esc(trigger(row))}</span>${keyword ? `<span class="keyword">طابق <bdi translate="no">${esc(keyword.toUpperCase())}</bdi></span>` : ""}${partialWord ? `<span class="partial" title="طابقت الكلمة جزءًا من كلمة أطول. تتطلب الأتمتة الآن كلمة كاملة.">داخل “${esc(partialWord)}”</span>` : ""}</div>
+      ${row.account_name ? `<p class="field-account">${PLATFORM_NAMES[row.platform!]} · ${esc(row.account_name)}</p>` : ""}
+      ${productImagePath(row.reply_image_id) ? `<img class="sent-photo" src="${productImagePath(row.reply_image_id)}" alt="صورة المنتج المرسلة" loading="lazy" width="120" height="120">` : ""}
+      ${row.reply_text ? `<p class="sent-reply">${esc(row.reply_text)}</p>` : ""}
       ${row.trigger_text ? `<p class="said" title="${esc(row.trigger_text)}">${said}</p>` : ""}
-      ${failed && row.error ? `<p class="note">${esc(row.error)}</p>` : ""}
-      ${row.status === "sent_public_reply_error" ? '<p class="note">DM sent. The public comment reply failed.</p>' : ""}
+      ${row.error ? `<p class="note">${esc(row.error)}</p>` : ""}
+      ${row.status === "sent_public_reply_error" ? '<p class="note">أُرسلت الرسالة الخاصة وتعذّر إرسال التعليق العلني.</p>' : ""}
     </div>
-    <div class="sent ${failed ? "failed" : ""}">${failed ? "Didn’t send" : `Sent ${esc(reply)}`}</div>
+    <div class="sent ${failed ? "failed" : ""}">${failed ? "تعذّر الإرسال" : `تم الإرسال ${esc(reply)}`}</div>
   </article>`;
 }
 
@@ -166,33 +189,33 @@ export function renderSentRows(rows: SentDmRow[]): string {
 }
 
 export function renderSentSummary(summary: SentDmSummary): string {
-  const sent = `<strong>${summary.sent.toLocaleString("en-US")}</strong> DM${summary.sent === 1 ? "" : "s"} sent in the last 24 hours`;
-  return summary.failed ? `${sent} · <span class="failed-count">${summary.failed.toLocaleString("en-US")} didn’t send</span>` : sent;
+  const sent = `الرسائل المرسلة خلال آخر 24 ساعة: <strong>${summary.sent.toLocaleString("ar-LY")}</strong>`;
+  return summary.failed ? `${sent} · <span class="failed-count">تعذّر إرسال ${summary.failed.toLocaleString("ar-LY")}</span>` : sent;
 }
 
 export function renderSentDmsPage(data: { rows: SentDmRow[]; summary: SentDmSummary; dryRun: boolean }): string {
-  const status = '<span id="live" class="mode" role="status" aria-live="polite"><i></i><span>Live</span></span>';
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Sent DMs · ${PRODUCT_NAME} for Instagram</title><style>${baseStyles}${headerStyles}${pageStyles}${sentRowStyles}</style></head><body>
-  <a class="skip" href="#main">Skip to content</a>
+  const status = '<span id="live" class="mode" role="status" aria-live="polite"><i></i><span>مباشر</span></span>';
+  return `<!doctype html><html lang="ar" dir="rtl" data-palette="studio"><head><meta charset="utf-8">${appearanceHead}<meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light"><title>الرسائل المرسلة · ${PRODUCT_NAME}</title><style>${baseStyles}${headerStyles}${pageStyles}${sentRowStyles}</style><link rel="stylesheet" href="/reply-studio.css?v=5">${appearanceStyles}</head><body>
+  <a class="skip" href="#main">انتقل إلى المحتوى</a>
   ${renderHeader("sent", status)}
   <main id="main" class="wrap">
-    <h1>Sent DMs</h1>
-    <p class="lede">Every DM your automations sent, and what the person did to get it. New ones appear on their own.</p>
-    ${data.dryRun ? '<p class="notice">Test mode is on, so nothing is being sent. Matches show up under Activity on the dashboard.</p>' : ""}
+    <h1>الرسائل المرسلة</h1>
+    <p class="lede">كل رسائل الأتمتة وأسباب إرسالها. تظهر الرسائل الجديدة تلقائيًا.</p>
+    ${data.dryRun ? '<p class="notice">وضع الاختبار مفعّل؛ لا تُرسل رسائل فعلية. تظهر المطابقات في نشاط لوحة الإدارة.</p>' : ""}
     <p id="sent-summary" class="summary">${renderSentSummary(data.summary)}</p>
     <div class="controls">
-      <div class="tabs" role="group" aria-label="Show">
-        <button type="button" data-filter="all" aria-pressed="true">All <span data-count="all"></span></button>
-        <button type="button" data-filter="comment" aria-pressed="false">From comments <span data-count="comment"></span></button>
-        <button type="button" data-filter="dm" aria-pressed="false">From DMs <span data-count="dm"></span></button>
-        <button type="button" data-filter="failed" aria-pressed="false">Didn’t send <span data-count="failed"></span></button>
+      <div class="tabs" role="group" aria-label="عرض">
+        <button type="button" data-filter="all" aria-pressed="true">الكل <span data-count="all"></span></button>
+        <button type="button" data-filter="comment" aria-pressed="false">من التعليقات <span data-count="comment"></span></button>
+        <button type="button" data-filter="dm" aria-pressed="false">من الرسائل <span data-count="dm"></span></button>
+        <button type="button" data-filter="failed" aria-pressed="false">تعذّر الإرسال <span data-count="failed"></span></button>
       </div>
-      <input id="sent-search" type="search" placeholder="Search a name or message" aria-label="Search a name or message">
+      <input id="sent-search" type="search" placeholder="ابحث باسم أو نص رسالة" aria-label="ابحث باسم أو نص رسالة">
     </div>
     <div id="sent-list">${renderSentRows(data.rows)}</div>
-    <p id="sent-empty" class="empty" ${data.rows.length ? "hidden" : ""}>${data.rows.length ? "No DMs match." : "No DMs sent yet."}</p>
-    <p class="foot">Latest ${SENT_DMS_LIMIT} · Times are in your time zone.</p>
-  </main><script>${clientScript}</script></body></html>`;
+    <p id="sent-empty" class="empty" ${data.rows.length ? "hidden" : ""}>${data.rows.length ? "لا توجد رسائل مطابقة." : "لم تُرسل رسائل بعد."}</p>
+    <p class="foot">آخر ${SENT_DMS_LIMIT} رسالة · الأوقات حسب منطقتك الزمنية.</p>
+  </main>${renderFooter()}<script>${clientScript}</script></body></html>`;
 }
 
 const clientScript = `
@@ -203,8 +226,8 @@ const clientScript = `
   const search = document.getElementById('sent-search');
   const live = document.getElementById('live');
   const buttons = [...document.querySelectorAll('[data-filter]')];
-  const clock = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
-  const longDay = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  const clock = new Intl.DateTimeFormat("ar-LY", { hour: 'numeric', minute: '2-digit' });
+  const longDay = new Intl.DateTimeFormat("ar-LY", { weekday: 'long', month: 'short', day: 'numeric' });
   let filter = 'all';
   let lastChecked = Date.now();
   let state = 'ok';
@@ -217,8 +240,8 @@ const clientScript = `
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    if (date.toDateString() === today.toDateString()) return 'اليوم';
+    if (date.toDateString() === yesterday.toDateString()) return 'أمس';
     return longDay.format(date);
   }
 
@@ -234,7 +257,7 @@ const clientScript = `
       if (row.dataset.failed === '1') counts.failed++;
       const time = row.querySelector('time');
       const date = new Date(time.dateTime);
-      if (!Number.isNaN(date.getTime())) { time.textContent = clock.format(date); time.title = date.toLocaleString(); }
+      if (!Number.isNaN(date.getTime())) { time.textContent = clock.format(date); time.title = date.toLocaleString("ar-LY"); }
       row.hidden = !matchesFilter(row) || Boolean(query && !row.dataset.search.includes(query));
       if (row.hidden) continue;
       shown++;
@@ -252,16 +275,16 @@ const clientScript = `
       if (badge) badge.textContent = value;
     }
     empty.hidden = shown > 0;
-    empty.textContent = counts.all ? 'No DMs match.' : 'No DMs sent yet.';
+    empty.textContent = counts.all ? 'لا توجد رسائل مطابقة.' : 'لم تُرسل رسائل بعد.';
   }
 
   function showLive() {
     const seconds = Math.round((Date.now() - lastChecked) / 1000);
     const label = live.querySelector('span');
     live.className = 'mode ' + (state === 'ok' ? '' : state === 'signed-out' ? 'off' : state);
-    if (state === 'signed-out') label.innerHTML = 'Signed out · <a href="/admin">Sign in</a>';
-    else if (state === 'error') label.textContent = 'Can’t reach the server · retrying';
-    else label.textContent = 'Live · checked ' + (seconds < 5 ? 'just now' : seconds < 60 ? seconds + 's ago' : Math.round(seconds / 60) + 'm ago');
+    if (state === 'signed-out') label.innerHTML = 'انتهت الجلسة · <a href="/admin">تسجيل الدخول</a>';
+    else if (state === 'error') label.textContent = 'تعذّر الاتصال بالخادم · نحاول مجددًا';
+    else label.textContent = 'مباشر · آخر تحديث ' + (seconds < 5 ? 'الآن' : seconds < 60 ? seconds.toLocaleString('ar-LY') + ' ثانية' : Math.round(seconds / 60).toLocaleString('ar-LY') + ' دقيقة');
   }
 
   let inFlight = false;
@@ -317,7 +340,7 @@ h1{font-size:26px;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin:
 .tabs{display:flex;flex-wrap:wrap;gap:2px;background:#efeee9;border-radius:8px;padding:3px}
 .tabs button{border:0;background:transparent;font-size:13px;padding:5px 12px;border-radius:6px;color:var(--muted)}
 .tabs button[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:0 1px 2px #1519161a}
-.tabs button span{font-size:12px;color:var(--faint);margin-left:3px;font-weight:400;font-variant-numeric:tabular-nums}
+.tabs button span{font-size:12px;color:var(--faint);margin-inline-start:3px;font-weight:400;font-variant-numeric:tabular-nums}
 input[type=search]{font-size:14px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);min-width:240px}
 input[type=search]:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px #24402f1a}
 .mode a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
@@ -330,10 +353,10 @@ input[type=search]:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3
 
 /** Row styles, shared with the dashboard's Recent DMs list. */
 export const sentRowStyles = `
-.dm-row{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.dm-row{display:grid;grid-template-columns:90px minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .dm-row time{font-size:13px;color:var(--faint);padding-top:1px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.recent-dms .dm-row{grid-template-columns:112px minmax(0,1fr) auto}
-.dm-main{min-width:0}
+.recent-dms .dm-row{grid-template-columns:140px minmax(0,1fr) auto}
+.dm-main{min-width:0}.sent-photo{display:block;width:120px;height:120px;object-fit:contain;border-radius:8px;margin-top:12px;background:var(--accent-soft)}.sent-reply{white-space:pre-wrap;background:var(--accent-soft);padding:10px 12px;border-radius:8px;margin:10px 0;font-size:13px}.field-account{color:var(--muted);font-size:12px;margin-top:4px}
 .dm-line{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
 .who{font-weight:500;color:var(--ink);text-decoration:none}a.who:hover{text-decoration:underline;text-underline-offset:2px}
 .why{color:var(--muted);font-size:13.5px}

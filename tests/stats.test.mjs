@@ -29,7 +29,7 @@ async function replyStats(h, cookie) {
   const section = html.match(/<section\b[^>]*\bid="performance"[^>]*>([\s\S]*?)<\/section>/)?.[1];
   assert.ok(section, "The dashboard must render the reply stats section");
   const headers = [...section.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((match) => plainText(match[1]));
-  for (const required of ["Comment matches", "DM matches", "DMs sent", "Errors", "Last sent"]) {
+  for (const required of ["مطابقات التعليقات", "مطابقات الرسائل", "الرسائل المرسلة", "الأخطاء", "آخر إرسال"]) {
     assert.ok(headers.includes(required), `Missing column: ${required}`);
   }
   const rows = [...section.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].flatMap((match) => {
@@ -61,7 +61,7 @@ function count(row, column) {
 }
 
 function expectCounts(row, expected) {
-  const columns = { comments: "Comment matches", dms: "DM matches", sent: "DMs sent", errors: "Errors" };
+  const columns = { comments: "مطابقات التعليقات", dms: "مطابقات الرسائل", sent: "الرسائل المرسلة", errors: "الأخطاء" };
   for (const [key, column] of Object.entries(columns)) {
     if (key in expected) assert.equal(count(row, column), expected[key], `${row.label}: ${column}`);
   }
@@ -115,10 +115,10 @@ test("every rule and custom reply has a stats row, including with no events", as
   const stats = await replyStats(h, cookie);
   assert.deepEqual(stats.labels, ["Example lead magnet", "Free guide", "Ask a question"]);
   expectCounts(stats.row("Free guide"), { comments: 0, dms: 0, sent: 0, errors: 0 });
-  assert.match(stats.row("Free guide").text, /Keyword · Comments 0 /);
-  assert.match(stats.row("Ask a question").text, /Custom reply · DMs/);
-  assert.equal(count(stats.row("Ask a question"), "Comment matches"), null, "Custom replies never match comments");
-  assert.doesNotMatch(stats.row("Free guide").cells["Last sent"], /<time\b/);
+  assert.match(stats.row("Free guide").text, /الكلمة المفتاحية · التعليقات 0 /);
+  assert.match(stats.row("Ask a question").text, /رد مخصص · رسائل خاصة/);
+  assert.equal(count(stats.row("Ask a question"), "مطابقات التعليقات"), null, "Custom replies never match comments");
+  assert.doesNotMatch(stats.row("Free guide").cells["آخر إرسال"], /<time\b/);
   assert.equal(h.calls.length, 0, "Loading stats must not call Instagram");
 });
 
@@ -146,7 +146,7 @@ test("rule stats combine comments and DMs and count only real deliveries as sent
   const stats = await replyStats(h, cookie);
   const row = stats.row("Free guide");
   expectCounts(row, { comments: 4, dms: 4, sent: 3, errors: 3 });
-  assert.ok(row.cells["Last sent"].includes(`datetime="${lastSent}"`), "Last sent must be a delivery, not a later test match");
+  assert.ok(row.cells["آخر إرسال"].includes(`datetime="${lastSent}"`), "Last sent must be a delivery, not a later test match");
   expectCounts(stats.row("Ask a question"), { dms: 1, sent: 1, errors: 0 });
   assert.deepEqual(stats.row("Workshop").values, otherBefore);
   assert.equal(h.calls.length, 0);
@@ -166,13 +166,13 @@ test("overview figures count every comment and DM and keep test matches apart fr
   await h.webhook(commentPayload("plain-comment", "Nice post"));
   await h.webhook(messagePayload("dry-dm", "GUIDE"));
   const cards = await overview(h, cookie);
-  assert.equal(cards["DMs sent"].value, 0);
-  assert.equal(cards["DMs sent"].detail, "2 test matches");
-  assert.equal(cards.Received.value, 3);
-  assert.equal(cards.Received.detail, "2 comments · 1 DM");
-  assert.equal(cards["Automations on"].detail, "of 2");
-  assert.equal(cards["Automations on"].value, 1);
-  assert.equal(cards.Errors.value, 0);
+  assert.equal(cards["الرسائل المرسلة"].value, 0);
+  assert.equal(cards["الرسائل المرسلة"].detail, "مطابقات تجريبية: 2");
+  assert.equal(cards["الوارد"].value, 3);
+  assert.equal(cards["الوارد"].detail, "تعليقات: 2 · رسائل: 1");
+  assert.equal(cards["الأتمتة المفعّلة"].detail, "من 2");
+  assert.equal(cards["الأتمتة المفعّلة"].value, 1);
+  assert.equal(cards["الأخطاء"].value, 0);
   assert.equal(h.calls.length, 0);
 });
 
@@ -187,7 +187,7 @@ test("signed deliveries are counted once, including duplicate webhooks", async (
   await h.webhook(message);
   expectCounts((await replyStats(h, cookie)).row("Free guide"), { comments: 1, dms: 1, sent: 2, errors: 0 });
   const cards = await overview(h, cookie);
-  assert.equal(cards["DMs sent"].value, 2);
-  assert.equal(cards["DMs sent"].detail, "All time · comments + DMs");
+  assert.equal(cards["الرسائل المرسلة"].value, 2);
+  assert.equal(cards["الرسائل المرسلة"].detail, "الإجمالي · التعليقات والرسائل");
   assert.equal(h.calls.filter((call) => call.url.pathname.endsWith("/messages")).length, 2);
 });

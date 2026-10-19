@@ -45,15 +45,15 @@ test("the local demo data loads after the migrations and fills every dashboard s
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
   for (const expected of [
     "Free photo guide", "Lightroom presets", "Workshop waitlist", "Podcast episode", "Photo walk sign-up",
-    "<span>DMs, Story replies</span>", "@demo_reader_1", "@demo_reader_10", "Conversation starter", "Story reply",
-    "Link source: newsletter", "Custom replies", "Collaborations", "Any story reply with GUIDE", "Not on Instagram yet",
-    "https://ig.me/demo.creator?ref=rule-101__website", "@demo.creator", "Instagram connection",
+    "<span>الرسائل الخاصة, ردود القصص</span>", "@demo_reader_1", "@demo_reader_10", "زر بدء محادثة", "رد على قصة",
+    "مصدر الرابط: newsletter", "الردود المخصصة", "Collaborations", "Any story reply with GUIDE", "لم تُنشر على إنستغرام بعد",
+    "https://ig.me/demo.creator?ref=rule-101__website", "@demo.creator", "الاتصال بإنستغرام",
   ]) {
     assert.ok(html.includes(expected), `Dashboard should show ${expected}`);
   }
   const recent = html.match(/<div class="recent-dms">([\s\S]*?)<\/div>\s*<\/section>/)?.[1] ?? "";
   assert.equal((recent.match(/<article class="dm-row"/g) ?? []).length, 5, "Recent DMs shows the latest five");
-  assert.match(recent, /replied to your story/);
+  assert.match(recent, /رد على قصتك/);
 
   // Comments that only mention a keyword in passing are not matches under the strict rule.
   for (const id of ["demo-c9", "demo-c10"]) {
@@ -62,9 +62,9 @@ test("the local demo data loads after the migrations and fills every dashboard s
   }
 
   const sent = await (await h.request("/admin/sent", { headers: { cookie } })).text();
-  assert.match(sent, /replied to your story/);
-  assert.match(sent, /opened your DM link from newsletter/);
-  assert.match(sent, /inside “guidelines”/, "The older partial-word send is flagged");
+  assert.match(sent, /رد على قصتك/);
+  assert.match(sent, /فتح رابط المحادثة من newsletter/);
+  assert.match(sent, /داخل “guidelines”/, "The older partial-word send is flagged");
   assert.match(sent, /data-kind="dm" data-failed="1"/, "The failed DM is listed");
   assert.match(sent, /<mark>WALK<\/mark>/, "A story reply answered by an automation highlights its keyword");
   assert.doesNotMatch(sent, /demo_reader_14|demo_reader_15|demo_reader_19/, "Unmatched comments and DMs are not sent DMs");

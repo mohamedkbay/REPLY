@@ -1,0 +1,4 @@
+export const appearanceHead = '<script src="/reply-preferences.js?v=4"></script><link rel="preload" href="/fonts/cairo/cairo-400.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/cairo/cairo-500.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/cairo/cairo-600.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/cairo/cairo-700.woff2" as="font" type="font/woff2" crossorigin><link rel="icon" type="image/svg+xml" href="/brand/app-icon.svg"><link rel="apple-touch-icon" href="/brand/apple-touch-icon.png"><script src="/reply-i18n.js" defer></script><script src="/reply-motion.js?v=4" defer></script>';
+export const paletteStyles = '';
+
+export const appearanceStyles = '<link rel="stylesheet" href="/reply-preferences.css?v=4">';

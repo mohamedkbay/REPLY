@@ -50,7 +50,7 @@ class TokenError extends Error {
 function seedValue(env: InstagramTokenEnv): string {
   const seed = env.INSTAGRAM_ACCESS_TOKEN?.trim();
   if (!seed || !env.IG_USER_ID?.trim()) {
-    throw new TokenError("Instagram credentials are missing. Reconnect the account.", true);
+    throw new TokenError("بيانات اتصال إنستغرام مفقودة. أعد ربط الحساب.", true);
   }
   return seed;
 }
@@ -100,7 +100,7 @@ async function decryptToken(env: InstagramTokenEnv, row: TokenRow): Promise<stri
     return token;
   } catch {
     // Crypto errors must not expose token values or cause fallback to an old seed.
-    throw new TokenError("The saved Instagram token could not be read. Reconnect the account.", true);
+    throw new TokenError("تعذّرت قراءة رمز الوصول المحفوظ. أعد ربط الحساب.", true);
   }
 }
 
@@ -113,8 +113,8 @@ function safeStatus(row: TokenRow | null, now: number): InstagramTokenStatus {
   const expired = row?.expires_at != null && row.expires_at <= now;
   const needsReconnect = Boolean(row?.needs_reconnect || expired);
   const overdue = row?.last_checked_at != null && now - row.last_checked_at > 3 * DAY;
-  const error = expired ? "The Instagram token expired. Reconnect the account." :
-    row?.safe_error ?? (overdue ? "The connection check is overdue." : null);
+  const error = expired ? "انتهت صلاحية رمز إنستغرام. أعد ربط الحساب." :
+    row?.safe_error ?? (overdue ? "تأخر فحص الاتصال." : null);
   return {
     state: needsReconnect ? "reconnect" : error ? "error" : row?.last_checked_at != null ? "healthy" : "pending",
     username: row?.username ?? null,
@@ -138,7 +138,7 @@ export async function getInstagramAccessToken(env: InstagramTokenEnv, now = Date
   // No matching row means an initial install or a manually replaced Cloudflare secret.
   if (!row) return seedValue(env);
   const status = safeStatus(row, now);
-  if (status.needsReconnect) throw new TokenError(status.error ?? "Reconnect the Instagram account.", true);
+  if (status.needsReconnect) throw new TokenError(status.error ?? "أعد ربط حساب إنستغرام.", true);
   return decryptToken(env, row);
 }
 
@@ -151,12 +151,12 @@ function graphBase(env: InstagramTokenEnv): URL {
     }
     return url;
   } catch {
-    throw new TokenError("Token renewal requires the official Instagram Graph API address.");
+    throw new TokenError("يتطلب تجديد الرمز العنوان الرسمي لواجهة إنستغرام.");
   }
 }
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
-  if (!response.body) throw new TokenError("Meta returned an empty response. It will try again tomorrow.");
+  if (!response.body) throw new TokenError("أعادت Meta ردًا فارغًا. ستتم المحاولة غدًا.");
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -167,7 +167,7 @@ async function readJson(response: Response): Promise<Record<string, unknown>> {
       size += value.byteLength;
       if (size > MAX_RESPONSE_BYTES) {
         await reader.cancel();
-        throw new TokenError("Meta returned an unexpected response. It will try again tomorrow.");
+        throw new TokenError("أعادت Meta ردًا غير متوقع. ستتم المحاولة غدًا.");
       }
       chunks.push(value);
     }
@@ -182,7 +182,7 @@ async function readJson(response: Response): Promise<Record<string, unknown>> {
     if (!result || typeof result !== "object" || Array.isArray(result)) throw new Error("Invalid response");
     return result as Record<string, unknown>;
   } catch {
-    throw new TokenError("Meta returned an unexpected response. It will try again tomorrow.");
+    throw new TokenError("أعادت Meta ردًا غير متوقع. ستتم المحاولة غدًا.");
   }
 }
 
@@ -198,21 +198,21 @@ async function graphRequest(url: URL, token?: string): Promise<Record<string, un
     });
     // Workers supports manual/follow only. Never forward credentials to a redirect destination.
     if (response.status >= 300 && response.status < 400) {
-      throw new TokenError("Meta returned an unexpected redirect. It will try again tomorrow.");
+      throw new TokenError("أعادت Meta توجيهًا غير متوقع. ستتم المحاولة غدًا.");
     }
     const body = await readJson(response);
     const error = body.error && typeof body.error === "object" ? body.error as Record<string, unknown> : null;
     if (error?.code === 190 || error?.code === 102 || response.status === 401) {
-      throw new TokenError("Meta rejected the Instagram token. Reconnect the account.", true);
+      throw new TokenError("رفضت Meta رمز إنستغرام. أعد ربط الحساب.", true);
     }
     if (!response.ok || error) {
-      throw new TokenError("Meta could not check or renew the token. It will try again tomorrow.");
+      throw new TokenError("تعذّر فحص الرمز أو تجديده. ستتم المحاولة غدًا.");
     }
     return body;
   } catch (error) {
     if (error instanceof TokenError) throw error;
     // Native fetch errors can contain the request URL, including refresh credentials.
-    throw new TokenError("Meta could not be reached. It will try again tomorrow.");
+    throw new TokenError("تعذّر الاتصال بـMeta. ستتم المحاولة غدًا.");
   } finally {
     clearTimeout(timeout);
   }
@@ -236,10 +236,10 @@ export async function maintainInstagramAccessToken(env: InstagramTokenEnv, now =
   if (claim.meta.changes !== 1) return getInstagramTokenStatus(env, now);
 
   const row = await readRow(env, seedFingerprint);
-  if (!row) throw new TokenError("The Instagram connection record is missing.");
+  if (!row) throw new TokenError("سجل اتصال إنستغرام غير موجود.");
   try {
     if (row.expires_at != null && row.expires_at <= now) {
-      throw new TokenError("The Instagram token expired. Reconnect the account.", true);
+      throw new TokenError("انتهت صلاحية رمز إنستغرام. أعد ربط الحساب.", true);
     }
     const base = graphBase(env);
     const token = await decryptToken(env, row);
@@ -247,7 +247,7 @@ export async function maintainInstagramAccessToken(env: InstagramTokenEnv, now =
     identityUrl.searchParams.set("fields", "user_id,username");
     const identity = await graphRequest(identityUrl, token);
     if (String(identity.user_id ?? "") !== env.IG_USER_ID) {
-      throw new TokenError("This token belongs to a different Instagram account. Reconnect the correct account.", true);
+      throw new TokenError("هذا الرمز لحساب إنستغرام مختلف. أعد ربط الحساب الصحيح.", true);
     }
     const username = typeof identity.username === "string" && /^[A-Za-z0-9._]{1,30}$/.test(identity.username)
       ? identity.username : null;
@@ -261,7 +261,7 @@ export async function maintainInstagramAccessToken(env: InstagramTokenEnv, now =
       if (typeof renewed.access_token !== "string" || !renewed.access_token || renewed.access_token.length > 8192 ||
           typeof renewed.expires_in !== "number" || !Number.isSafeInteger(renewed.expires_in) ||
           renewed.expires_in <= 0 || renewed.expires_in > 366 * 24 * 60 * 60) {
-        throw new TokenError("Meta returned an unexpected renewal response. It will try again tomorrow.");
+        throw new TokenError("أعادت Meta رد تجديد غير متوقع. ستتم المحاولة غدًا.");
       }
       const lifetime = renewed.expires_in * 1000;
       const expiresAt = now + lifetime;
@@ -280,7 +280,7 @@ export async function maintainInstagramAccessToken(env: InstagramTokenEnv, now =
     }
   } catch (error) {
     const safeError = error instanceof TokenError ? error :
-      new TokenError("The token check could not finish. It will try again tomorrow.");
+      new TokenError("تعذّر إكمال فحص الرمز. ستتم المحاولة غدًا.");
     // Preserve the last working ciphertext and expiry after transient failures.
     await env.DB.prepare(
       `UPDATE instagram_tokens SET last_checked_at = ?, needs_reconnect = ?, safe_error = ?,

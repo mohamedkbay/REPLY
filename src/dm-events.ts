@@ -8,6 +8,7 @@ export type DmEvent = {
   senderId: string;
   recipientId: string | null;
   text: string;
+  hasImage?: boolean;
   quickReplyPayload: string | null;
   timestamp: number | null;
   kind: "message" | "postback" | "referral";
@@ -65,7 +66,7 @@ async function parseDmEvent(input: unknown, entryId: string | null): Promise<DmE
   const message = record(value.message);
   const postback = record(value.postback);
   // Changes-style messages can expose their fields directly on value.
-  const legacyMessage = !message && !postback && (value.text || value.quick_reply) ? value : null;
+  const legacyMessage = !message && !postback && (value.text || value.quick_reply || value.attachments) ? value : null;
   const content = message ?? legacyMessage;
   // Echoes are the account's own outgoing messages.
   if (value.is_echo === true || content?.is_echo === true || content?.is_deleted === true ||
@@ -86,10 +87,11 @@ async function parseDmEvent(input: unknown, entryId: string | null): Promise<DmE
   const story = record(record(content?.reply_to)?.story);
   const storyId = string(story?.id, 256);
   const attachments = Array.isArray(content?.attachments) ? content.attachments : [];
+  const hasImage = attachments.some((attachment) => record(attachment)?.type === "image");
   const mention = attachments.map(record).find((attachment) => attachment?.type === "story_mention");
   const storyUrl = httpsUrl(story?.url) ?? httpsUrl(record(mention?.payload)?.url);
   const storyLinkUrl = httpsUrl(story?.link_sticker_url);
-  if (!text && !quickReplyPayload && !referralRef && !storyId && !storyUrl && !mention) return null;
+  if (!text && !hasImage && !quickReplyPayload && !referralRef && !storyId && !storyUrl && !mention) return null;
   const timestampValue = value.timestamp ?? content?.timestamp;
   const timestamp = typeof timestampValue === "number" && Number.isFinite(timestampValue) && timestampValue > 0
     ? timestampValue : null;
@@ -99,11 +101,11 @@ async function parseDmEvent(input: unknown, entryId: string | null): Promise<DmE
     string(postback?.mid, 1000) ?? string(value.mid, 1000);
   if (!messageId) {
     // Postbacks and link opens may arrive without an ID. Hash the event so duplicates still dedupe.
-    const identity = JSON.stringify([entryId, senderId, recipientId, timestamp, kind, quickReplyPayload, referralRef, storyId, storyUrl, text]);
+    const identity = JSON.stringify([entryId, senderId, recipientId, timestamp, kind, quickReplyPayload, referralRef, storyId, storyUrl, text, ...(hasImage ? ["image"] : [])]);
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(identity));
     messageId = `event:${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
   }
-  return { messageId, senderId, recipientId, text, quickReplyPayload, timestamp, kind, source, storyId, storyUrl, storyLinkUrl, referralRef };
+  return { messageId, senderId, recipientId, text, ...(hasImage ? { hasImage: true } : {}), quickReplyPayload, timestamp, kind, source, storyId, storyUrl, storyLinkUrl, referralRef };
 }
 
 export function matchStoryRule(event: DmEvent, rules: StoryRule[]): StoryRule | null {

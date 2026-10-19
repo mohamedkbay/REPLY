@@ -14,6 +14,7 @@ export type KeywordMatch = { match: boolean; reason: "match" | "missing" | "too_
  */
 export function keywordMatch(text: string, keyword: string): KeywordMatch {
   const requestWords = new Set([
+    "من", "فضلك", "لو", "سمحت", "ارسل", "أرسل", "لي", "ابي", "أبي", "نبي", "اريد", "أريد", "ممكن", "شكرا", "شكرًا", "السلام", "عليكم", "مرحبا", "مرحبًا", "بكم", "سعر", "السعر",
     "a", "an", "the", "my", "me", "i", "you", "it", "to", "for", "of", "and", "or",
     "please", "pls", "plz", "send", "get", "can", "could", "would", "want", "need",
     "link", "links", "info", "dm", "dms", "here", "now", "yes", "yeah", "yep", "ok", "okay",

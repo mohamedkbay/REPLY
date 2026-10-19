@@ -41,7 +41,7 @@ test("an automation can answer DMs and story replies with its own message and bu
   const rule = h.query("SELECT id, channels FROM rules WHERE label = 'Free guide'");
   assert.deepEqual(JSON.parse(rule.channels), ["dms", "stories"]);
 
-  await h.webhook(messagePayload("dm-guide", "guide please"));
+  await h.webhook(messagePayload("dm-guide", "GUIDE من فضلك"));
   await h.webhook(storyReply("story-guide", "GUIDE"));
   await h.webhook(commentPayload("comment-guide", "GUIDE please", "commenter"));
 
@@ -62,9 +62,9 @@ test("an automation can answer DMs and story replies with its own message and bu
   assert.equal(h.calls.filter((call) => call.url.pathname.endsWith("/replies")).length, 0, "No public reply outside comments");
 
   const html = await (await h.request("/admin", { headers: { cookie } })).text();
-  assert.match(html, /<strong>Free guide<\/strong><span>DMs, Story replies<\/span>/);
-  assert.match(html, /<span class="auto-sent">2 sent<\/span>/);
-  assert.match(html, /Keyword · DMs, Story replies/);
+  assert.match(html, /<strong translate="no">Free guide<\/strong><span>الرسائل الخاصة, ردود القصص<\/span>/);
+  assert.match(html, /<span class="auto-sent">2 مُرسل<\/span>/);
+  assert.match(html, /الكلمة المفتاحية · الرسائل الخاصة, ردود القصص/);
 });
 
 test("public replies only go to comments", async (t) => {
@@ -96,7 +96,7 @@ test("a submission without channels means comments, and the picker needs at leas
   const nothingChecked = guideForm([""], { label: "Nowhere", keywords: "NOWHERE" });
   const rejected = await post(h, cookie, nothingChecked);
   assert.equal(rejected.status, 400);
-  assert.match(await rejected.text(), /Choose where the automation listens/);
+  assert.match(await rejected.text(), /اختر مصدر التفاعل/);
 
   const moved = guideForm(["", "dms"]);
   moved.append("action", "save");
@@ -123,7 +123,7 @@ test("a failed comment can't be retried once its automation stops listening on c
   h.setResponder(() => Response.json({ message_id: "ok" }));
   const retry = await h.postForm("/admin/events/failed/retry", {}, cookie);
   assert.equal(retry.status, 400);
-  assert.match(await retry.text(), /no longer listens on comments/);
+  assert.match(await retry.text(), /لم تعد الأتمتة تستقبل التعليقات/);
   assert.equal(messages(h).length, 1);
 });
 
@@ -133,10 +133,10 @@ test("the same keyword can be used on different channels, but not twice on one",
   assert.equal((await post(h, cookie, guideForm(["dms"], { label: "Guide by DM" }))).status, 303);
   const clash = await post(h, cookie, guideForm(["stories", "dms"], { label: "Guide again" }));
   assert.equal(clash.status, 400);
-  assert.match(await clash.text(), /GUIDE is already used by “Guide by DM” for DMs/);
+  assert.match(await clash.text(), /GUIDE مستخدمة بالفعل في «Guide by DM» في الرسائل الخاصة/);
   const both = await post(h, cookie, guideForm(["comments", "dms", "stories"], { label: "Guide everywhere" }));
   assert.equal(both.status, 400);
-  assert.match(await both.text(), /GUIDE is already used by “Free guide” for comments\./);
+  assert.match(await both.text(), /GUIDE مستخدمة بالفعل في «Free guide» في التعليقات\./);
   assert.equal((await post(h, cookie, guideForm(["stories"], { label: "Guide by story" }))).status, 303);
 
   const dmRule = h.query("SELECT id FROM rules WHERE label = 'Guide by DM'");
@@ -184,7 +184,7 @@ test("after the migration, an automation from an install with DM keywords on sti
   await h.db.prepare(`INSERT INTO rules (label, channels, keywords, reply_text, active, created_at, updated_at)
     VALUES ('Free guide', '["comments","dms","stories"]', '["GUIDE"]', 'Here is the guide.', 1, ?, ?)`).bind(now, now).run();
   await h.webhook(messagePayload("dm", "GUIDE"));
-  await h.webhook(storyReply("story", "guide please"));
+  await h.webhook(storyReply("story", "GUIDE من فضلك"));
   assert.equal(h.query("SELECT status FROM message_events WHERE message_id = 'dm'").status, "sent");
   assert.equal(h.query("SELECT status FROM message_events WHERE message_id = 'story'").status, "sent");
   assert.equal(messages(h).length, 2);

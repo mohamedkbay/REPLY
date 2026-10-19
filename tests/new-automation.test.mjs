@@ -43,26 +43,26 @@ test("the new automation form offers templates, a channel picker, a tester, a pr
   for (const field of ["label", "keywords", "reply_text", "public_reply_text", "link_url", "link_button_label", "active"]) {
     assert.match(dialog, new RegExp(`name="${field}"`), field);
   }
-  for (const label of ["Book or product", "Free guide", "Event or workshop", "Waitlist", "Podcast episode", "Blank"]) {
+  for (const label of ["كتاب أو منتج", "دليل مجاني", "فعالية أو ورشة", "قائمة الانتظار", "حلقة بودكاست", "بدون قالب"]) {
     assert.match(dialog, new RegExp(`class="template"[^>]*>${label}</button>`), label);
   }
-  assert.match(dialog, /Listen for it in/);
+  assert.match(dialog, /مصدر التفاعل/);
   assert.deepEqual([...dialog.matchAll(/type="checkbox" name="channels" value="(\w+)"/g)].map((match) => match[1]), ["comments", "dms", "stories"]);
   assert.match(dialog, /type="checkbox" name="channels" value="comments" checked/, "New automations start on comments");
   assert.match(dialog, /id="nr-test"/);
   assert.match(dialog, /id="nrp-message"/);
   assert.match(dialog, /id="nrp-as-dm"/, "The preview has a DM and story variant");
   assert.match(dialog, /id="nr-message-count">0 \/ 1,000</);
-  assert.match(dialog, /live in <a href="#settings" data-close-dialog>Settings<\/a>/);
+  assert.match(dialog, /موجودة في <a href="\/admin\/advanced" data-close-dialog>الإعدادات<\/a>/);
   assert.match(dialog, /<strong>test_owner<\/strong> <span id="nrp-public">/, "The public reply preview uses the account name");
-  assert.deepEqual(attribute(dialog, "data-suggested"), ["Sent you the link", "Check your DMs", "Just sent it over", "Dropped it in your DMs", "On it, check your DMs"]);
+  assert.deepEqual(attribute(dialog, "data-suggested"), ["أرسلنا لك الرابط", "راجع رسائلك الخاصة", "تم الإرسال، تفضل بمراجعة الخاص", "الرابط في رسائلك الخاصة", "حاضر، راجع الخاص"]);
   const taken = attribute(dialog, "data-taken");
   assert.deepEqual(taken.workshop, [{ label: "Workshop", channels: ["comments", "stories"] }]);
   assert.deepEqual(taken.join, [{ label: "Workshop", channels: ["comments", "stories"] }]);
   assert.equal(taken.promo, undefined, "Paused automations don’t block a keyword");
   assert.equal(taken.guide, undefined, "The paused example automation doesn’t block GUIDE");
   assert.match(html, /const keywordMatch = \(function keywordMatch\w*\(/, "The tester embeds the server matcher");
-  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => match[1]).find(script => script.includes("const keywordMatch ="));
   assert.doesNotThrow(() => new Function(script), "The dashboard script parses");
   const embedded = new Function(`return ${script.match(/const keywordMatch = (\(function[\s\S]*?\n\}\));/)[1]};`)();
   assert.deepEqual(embedded("guide please", "GUIDE"), { match: true, reason: "match" });
@@ -97,7 +97,7 @@ test("a keyword another active automation uses on the same channel is rejected, 
   const before = rulesCount(h);
   const clash = await h.postForm("/admin/rules", ruleForm({ label: "Guide again", keywords: "books, guide" }), cookie);
   assert.equal(clash.status, 400);
-  assert.match(await clash.text(), /GUIDE is already used by “Free guide” for comments/);
+  assert.match(await clash.text(), /GUIDE مستخدمة بالفعل في «Free guide» في التعليقات/);
   assert.equal(rulesCount(h), before);
 
   const created = h.query("SELECT id FROM rules WHERE label = 'Free guide'");
@@ -108,7 +108,7 @@ test("a keyword another active automation uses on the same channel is rejected, 
   const books = h.query("SELECT id FROM rules WHERE label = 'Books'");
   const moved = await h.postForm(`/admin/rules/${books.id}`, { ...ruleForm({ label: "Books", keywords: "Guide" }), action: "save" }, cookie);
   assert.equal(moved.status, 400);
-  assert.match(await moved.text(), /“Renamed guide”/);
+  assert.match(await moved.text(), /«Renamed guide»/);
 });
 
 test("paused automations may share a keyword until one is turned on", async (t) => {
@@ -120,7 +120,7 @@ test("paused automations may share a keyword until one is turned on", async (t) 
   assert.equal(winter.active, 0);
   const toggled = await h.postForm(`/admin/rules/${winter.id}`, { action: "toggle" }, cookie);
   assert.equal(toggled.status, 400);
-  assert.match(await toggled.text(), /pause “Free guide” first/);
+  assert.match(await toggled.text(), /أوقف «Free guide» أولًا/);
   assert.equal(h.query("SELECT active FROM rules WHERE id = ?", winter.id).active, 0);
   const savedOn = await h.postForm(`/admin/rules/${winter.id}`, { ...ruleForm({ label: "Winter guide" }), action: "save" }, cookie);
   assert.equal(savedOn.status, 400);
@@ -135,10 +135,10 @@ test("DM messages longer than Instagram allows are rejected before they can fail
   const { h, cookie } = await fixture(t);
   const withButton = await h.postForm("/admin/rules", ruleForm({ reply_text: "x".repeat(641) }), cookie);
   assert.equal(withButton.status, 400);
-  assert.match(await withButton.text(), /640 characters when it has a button/);
+  assert.match(await withButton.text(), /مع زر 640 حرفًا/);
   const plain = await h.postForm("/admin/rules", ruleForm({ keywords: "PLAIN", reply_text: "x".repeat(1001), link_url: "", link_button_label: "" }), cookie);
   assert.equal(plain.status, 400);
-  assert.match(await plain.text(), /1,000 characters/);
+  assert.match(await plain.text(), /1,000 حرف/);
   assert.equal((await h.postForm("/admin/rules", ruleForm({ keywords: "BUTTON", reply_text: "x".repeat(640) }), cookie)).status, 303);
   assert.equal((await h.postForm("/admin/rules", ruleForm({ keywords: "LONG", reply_text: "x".repeat(1000), link_url: "", link_button_label: "" }), cookie)).status, 303);
 
@@ -152,11 +152,11 @@ test("keywords that can never match and half-finished buttons are rejected", asy
   const { h, cookie } = await fixture(t);
   const before = rulesCount(h);
   for (const [fields, message] of [
-    [{ keywords: "@yourhandle" }, /can never match/],
-    [{ keywords: "!!!" }, /can never match/],
-    [{ keywords: "one two three four five six seven eight nine" }, /at most eight words/],
-    [{ link_url: "" }, /both a button link and button label/],
-    [{ link_button_label: "" }, /both a button link and button label/],
+    [{ keywords: "@yourhandle" }, /لن تطابق/],
+    [{ keywords: "!!!" }, /لن تطابق/],
+    [{ keywords: "one two three four five six seven eight nine" }, /بحد أقصى ثماني كلمات/],
+    [{ link_url: "" }, /رابط الزر ونصه/],
+    [{ link_button_label: "" }, /رابط الزر ونصه/],
     [{ link_url: "http://example.test/guide" }, /https/],
   ]) {
     const response = await h.postForm("/admin/rules", ruleForm(fields), cookie);

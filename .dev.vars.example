@@ -13,3 +13,6 @@ DRY_RUN=true
 # Optional: prevents your own comments from triggering replies, and is used for
 # DM links until the connection has been checked.
 OWNER_IG_USERNAME=yourhandle
+
+# Encrypts connected account credentials. Generate a unique random value (32+ characters).
+ACCOUNT_ENCRYPTION_KEY=

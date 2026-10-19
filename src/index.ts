@@ -1,3 +1,8 @@
+import { languageResponse, localizeAdminResponse } from "./i18n";
+import { pollTikTokAccounts, recentTikTokEvents } from "./tiktok";
+import { parseProductImage, serveProductImage, sendPhotoReply, type ReplyImage } from "./product-images";
+import { handleSettings } from "./settings-routes";
+import { handleChannelWebhook, recentChannelActivity } from "./channels";
 import { renderDashboardPage, renderErrorPage, renderLoginPage, renderMissingAdminTokenPage } from "./dashboard";
 import { extractDmEvents, matchStoryRule, type DmEvent } from "./dm-events";
 import {
@@ -28,6 +33,9 @@ import {
   type InstagramTokenStatus
 } from "./instagram-token";
 import { isBasicallyKeyword } from "./keyword-match";
+import { generalBusinessReply, getBusinessReplies } from "./smart-replies";
+import { findProductReply, getProducts, getProductSettings, parseProductForm, previewProductReply, productHelpReply, saveProduct, type ProductBotSettings } from "./products";
+import { renderProductsPage } from "./products-page";
 import { getSentDms, getSentDmSummary, renderSentDmsPage, renderSentRows, renderSentSummary } from "./sent-dms";
 import {
   CHANNELS,
@@ -47,7 +55,10 @@ type SecretEnv = {
   INSTAGRAM_ACCESS_TOKEN: string;
   IG_USER_ID: string;
   ADMIN_TOKEN?: string;
+  ACCOUNT_ENCRYPTION_KEY?: string;
   OWNER_IG_USERNAME?: string;
+  RESERVE_REPLY?: () => boolean;
+  SAAS_MODE?: boolean;
 };
 
 type AppEnv = Cloudflare.Env & SecretEnv;
@@ -112,6 +123,7 @@ type ResolvedReply = {
   key: string;
   label: string;
   paused: boolean;
+  image?: ReplyImage;
   message: Record<string, unknown>;
 };
 
@@ -134,10 +146,11 @@ const DM_FEATURE_PATHS = new Set([
   "/admin/custom-replies"
 ]);
 
-export default {
+const worker = {
   // Daily cron (wrangler.jsonc): check the Instagram connection and renew the
   // token before it expires. Skipped in test mode.
   async scheduled(_controller: ScheduledController, env: AppEnv): Promise<void> {
+    if (_controller.cron === "* * * * *") { await pollTikTokAccounts(env); return; }
     if (isDryRun(env)) {
       return;
     }
@@ -155,7 +168,7 @@ export default {
     if (request.method === "POST" && url.pathname.startsWith("/admin/")) {
       const origin = request.headers.get("origin");
       if ((origin && origin !== url.origin) || request.headers.get("sec-fetch-site") === "cross-site") {
-        return html(renderErrorPage("Admin changes must come from this dashboard."), 403);
+        return html(renderErrorPage("يجب إجراء التعديلات من لوحة الإدارة نفسها."), 403);
       }
     }
 
@@ -163,7 +176,19 @@ export default {
       return json({ ok: true, service: "manychat-lite-cloudflare", admin: "/admin" });
     }
 
-    if (request.method === "GET" && url.pathname === "/admin") {
+    const mediaMatch = url.pathname.match(/^\/media\/products\/([a-f0-9]{64})$/);
+    if (mediaMatch) return serveProductImage(request, env.DB, mediaMatch[1]);
+    const channelMatch = url.pathname.match(/^\/channels\/(instagram|facebook|whatsapp|telegram)(?:\/([a-f0-9-]{36}))?$/);
+    if (channelMatch) return handleChannelWebhook(request, env, channelMatch[1], channelMatch[2]);
+    if (/^\/admin\/(tiktok(?:\/preview|\/[a-f0-9-]{36}\/(enable|pause|check|disconnect))?|settings(?:\/(replies|preview))?|connections(?:\/[a-f0-9-]{36}\/(check|subscribe|pause|resume|disconnect))?)$/.test(url.pathname)) {
+      if (!(await isAdminRequest(request, env))) return url.pathname.endsWith("/preview") ? json({ error: "يلزم تسجيل الدخول." }, 401) : redirect("/admin");
+      return handleSettings(request, env, url);
+    }
+    if (request.method === "GET" && url.pathname === "/admin/appearance") {
+      if (!(await isAdminRequest(request, env))) return redirect("/admin");
+      return redirect("/admin/products");
+    }
+    if (request.method === "GET" && ["/admin", "/admin/automations", "/admin/activity", "/admin/stats", "/admin/advanced"].includes(url.pathname)) {
       return handleAdminGet(request, env, url);
     }
 
@@ -171,9 +196,16 @@ export default {
       return handleSentDms(request, env, url);
     }
 
+    if (url.pathname === "/admin/products" || /^\/admin\/products\/(settings|preview|\d+(?:\/availability)?)$/.test(url.pathname)) {
+      if (!(await isAdminRequest(request, env))) {
+        return url.pathname.endsWith("/preview") ? json({ error: "يلزم تسجيل الدخول." }, 401) : redirect("/admin");
+      }
+      return handleProducts(request, env, url);
+    }
+
     if (request.method === "GET" && url.pathname === "/admin/connection") {
       if (!(await isAdminRequest(request, env))) {
-        return json({ ok: false, error: "Login required." }, 401);
+        return json({ ok: false, error: "يلزم تسجيل الدخول." }, 401);
       }
       return json(await getConnectionStatus(env));
     }
@@ -186,12 +218,12 @@ export default {
       if (!isDryRun(env) && hasInstagramCredentials(env)) {
         await maintainInstagramAccessToken(env);
       }
-      return redirect("/admin#connection");
+      return redirect("/admin/advanced#connection");
     }
 
     if (request.method === "GET" && url.pathname === "/admin/dm-features") {
       if (!(await isAdminRequest(request, env))) {
-        return json({ ok: false, error: "Login required." }, 401);
+        return json({ ok: false, error: "يلزم تسجيل الدخول." }, 401);
       }
       const settings = await getDmFeatureSettings(env.DB);
       return json({ settings, publication: await getIceBreakersPublicationStatus(env.DB, settings) });
@@ -224,7 +256,7 @@ export default {
       try {
         commentId = decodeURIComponent(retryMatch[1]);
       } catch {
-        return html(renderErrorPage("That comment ID is not valid."), 400);
+        return html(renderErrorPage("معرّف التعليق غير صالح."), 400);
       }
       return handleRetryEvent(request, env, commentId);
     }
@@ -238,6 +270,14 @@ export default {
     }
 
     return json({ ok: false, error: "Not found" }, 404);
+  }
+};
+
+export default {
+  ...worker,
+  async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
+    if (request.method === "GET" && new URL(request.url).pathname === "/admin/language") return languageResponse(request);
+    return localizeAdminResponse(request, await worker.fetch(request, env, ctx));
   }
 };
 
@@ -269,7 +309,7 @@ async function handleWebhookPost(
   }
 
   for (const event of messageEvents) {
-    ctx.waitUntil(processMessageEvent(event, env));
+    ctx.waitUntil(processMessageEvent(event, env, new URL(request.url).origin));
   }
 
   return json({
@@ -315,6 +355,11 @@ async function processCommentEvent(event: CommentEvent, env: AppEnv): Promise<vo
     return;
   }
 
+  if (env.RESERVE_REPLY && !env.RESERVE_REPLY()) {
+    await updateStatus(env.DB, event.commentId, "ignored_no_keyword", false, null);
+    return;
+  }
+
   if (isDryRun(env)) {
     await updateStatus(env.DB, event.commentId, "dry_run_matched", true, rule);
     console.log(JSON.stringify({ level: "info", msg: "dry_run_private_reply", event, rule: summarizeRule(rule) }));
@@ -348,7 +393,7 @@ async function getConnectionStatus(env: AppEnv): Promise<InstagramTokenStatus> {
       nextRefreshAt: null,
       expiresAt: null,
       needsReconnect: true,
-      error: "Set the INSTAGRAM_ACCESS_TOKEN and IG_USER_ID secrets to connect Instagram."
+      error: "اضبط INSTAGRAM_ACCESS_TOKEN وIG_USER_ID لربط إنستغرام."
     };
   }
   return getInstagramTokenStatus(env);
@@ -451,7 +496,7 @@ function hashString(value: string): number {
 }
 
 // Incoming DMs, conversation starter taps, story replies and ig.me link opens.
-async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
+async function processMessageEvent(event: DmEvent, env: AppEnv, origin: string): Promise<void> {
   if (!(await insertMessageEvent(env.DB, event, new Date().toISOString()))) {
     console.log(JSON.stringify({ level: "info", msg: "duplicate_message", messageId: event.messageId }));
     return;
@@ -483,7 +528,7 @@ async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
       username: null,
       isFollower: null,
       checkedAt: new Date().toISOString(),
-      error: "Follower status could not be checked."
+      error: "تعذّر التحقق من حالة المتابعة."
     }));
     follower = profile.isFollower;
     await env.DB.prepare(
@@ -503,6 +548,7 @@ async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
   let replyKey: string | null;
   let paused = false;
   let pausedLabel: string | null = null;
+  let catalogReply: ResolvedReply | null = null;
   if (starterReply) {
     replyKey = starterReply;
     paused = !settings.startersEnabled;
@@ -512,8 +558,18 @@ async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
     pausedLabel = storyRule.label;
   } else {
     const channel = messageChannel(event);
-    const keywordRule = channel ? await findMatchingRule(env.DB, event.text, channel, env) : null;
-    replyKey = keywordRule ? ruleReplyKey(keywordRule.id) : parseReplyRef(event.referralRef)?.reply ?? null;
+    const productSettings = channel ? await getProductSettings(env.DB) : null;
+    if (productSettings?.enabled) catalogReply = await findProductReply(env.DB, event.text);
+    const keywordRule = !catalogReply && channel ? await findMatchingRule(env.DB, event.text, channel, env) : null;
+    replyKey = catalogReply?.key ?? (keywordRule ? ruleReplyKey(keywordRule.id) : parseReplyRef(event.referralRef)?.reply ?? null);
+    if (!replyKey && channel) {
+      catalogReply = await generalBusinessReply(env.DB, event.text, event.hasImage === true);
+      if (!catalogReply && productSettings?.enabled) {
+        const business = await getBusinessReplies(env.DB);
+        if (!business.enabled) catalogReply = productHelpReply(productSettings, event.text, event.hasImage === true);
+      }
+      replyKey = catalogReply?.key ?? null;
+    }
   }
 
   if (!replyKey) {
@@ -521,7 +577,7 @@ async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
     return;
   }
 
-  const reply = await resolveReply(env.DB, replyKey, settings);
+  const reply = catalogReply ?? await resolveReply(env.DB, replyKey, settings);
   if (paused) {
     await updateMessageStatus(env.DB, event.messageId, "ignored_paused", { replyKey, label: pausedLabel ?? reply?.label ?? replyKey });
     return;
@@ -534,6 +590,10 @@ async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
     await updateMessageStatus(env.DB, event.messageId, "ignored_paused", { replyKey, label: reply.label });
     return;
   }
+  if (env.RESERVE_REPLY && !env.RESERVE_REPLY()) {
+    await updateMessageStatus(env.DB, event.messageId, "ignored_paused", { replyKey, label: reply.label });
+    return;
+  }
   if (dryRun) {
     await updateMessageStatus(env.DB, event.messageId, "dry_run_matched", { replyKey, label: reply.label });
     console.log(JSON.stringify({ level: "info", msg: "dry_run_dm_reply", messageId: event.messageId, source: event.source, reply: replyKey }));
@@ -542,8 +602,12 @@ async function processMessageEvent(event: DmEvent, env: AppEnv): Promise<void> {
 
   const greeting = follower === true ? settings.followerReply : follower === false ? settings.nonFollowerReply : "";
   try {
-    const metaResponse = await postInstagramMessage(env, { id: event.senderId }, withFollowerGreeting(reply.message, greeting));
-    await updateMessageStatus(env.DB, event.messageId, "sent", { replyKey, label: reply.label, metaResponse });
+    const message = withFollowerGreeting(reply.message, greeting);
+    const sendText = () => postInstagramMessage(env, { id: event.senderId }, message);
+    const delivery = reply.image ? await sendPhotoReply(reply.image, String(message.text ?? ''), origin, sendText,
+      imageUrl => postInstagramMessage(env, { id: event.senderId }, { attachment: { type: 'image', payload: { url: imageUrl } } }), false) : null;
+    const metaResponse = delivery?.metaResponse ?? await sendText();
+    await updateMessageStatus(env.DB, event.messageId, "sent", { replyKey, label: reply.label, metaResponse, error: delivery?.warning, imageId: delivery?.imageId ?? null });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await updateMessageStatus(env.DB, event.messageId, "send_error", { replyKey, label: reply.label, error: message });
@@ -612,7 +676,7 @@ async function insertMessageEvent(db: D1Database, event: DmEvent, receivedAt: st
       event.messageId,
       event.senderId,
       event.recipientId,
-      event.text,
+      event.text || (event.hasImage ? "📷 صورة منتج" : ""),
       event.quickReplyPayload,
       receivedAt,
       event.source,
@@ -630,7 +694,7 @@ async function updateMessageStatus(
   db: D1Database,
   messageId: string,
   status: string,
-  details: { replyKey?: string; label?: string; metaResponse?: unknown; error?: string } = {}
+  details: { replyKey?: string; label?: string; metaResponse?: unknown; error?: string; imageId?: string | null } = {}
 ): Promise<void> {
   await db.prepare(
     `UPDATE message_events
@@ -638,6 +702,7 @@ async function updateMessageStatus(
          reply_key = ?,
          matched_choice = ?,
          meta_response = ?,
+         reply_image_id = ?,
          error = ?,
          sent_at = CASE WHEN ? = 'sent' THEN ? ELSE sent_at END
      WHERE message_id = ?`
@@ -647,6 +712,7 @@ async function updateMessageStatus(
       details.replyKey ?? null,
       details.label ?? null,
       details.metaResponse ? JSON.stringify(details.metaResponse) : null,
+      details.imageId ?? null,
       details.error ?? null,
       status,
       new Date().toISOString(),
@@ -872,6 +938,49 @@ function buildPrivateReplyMessage(
   };
 }
 
+async function handleProducts(request: Request, env: AppEnv, url: URL): Promise<Response> {
+  const page = async (error?: string, draft?: { id: number | null; form: FormData }, settingsDraft?: ProductBotSettings): Promise<Response> => html(renderProductsPage({
+    products: await getProducts(env.DB), settings: settingsDraft ?? await getProductSettings(env.DB),
+    dryRun: isDryRun(env), saved: url.searchParams.get("saved") === "1", editId: Number(url.searchParams.get("edit")) || undefined, error, draft
+  }), error ? 400 : 200);
+  if (request.method === "GET" && url.pathname === "/admin/products") return page();
+  if (request.method !== "POST") return json({ error: "هذا الطلب غير مدعوم." }, 405);
+  if (Number(request.headers.get("content-length")) > 2_000_000) return page("الصورة كبيرة. اختار صورة أصغر وحاول مجددًا.");
+  const form = await request.formData();
+  if (url.pathname === "/admin/products/preview") {
+    const text = String(form.get("text") ?? "");
+    if (text.length > 1000) return json({ error: "الرسالة طويلة جدًا." }, 400);
+    const reply = await previewProductReply(env.DB, text, form.get("image") === "true");
+    return json({ image: reply?.image ?? null, text: reply?.message.text ?? "بوت المنتجات متوقف. فعّل الرد على استفسارات المنتجات واحفظ الإعدادات أولًا." });
+  }
+  if (url.pathname === "/admin/products/settings") {
+    const settings: ProductBotSettings = { enabled: form.get("enabled") === "on", prompt: String(form.get("prompt") ?? "").trim(), unknown: String(form.get("unknown") ?? "").trim() };
+    if (!settings.prompt || !settings.unknown || settings.prompt.length > 500 || settings.unknown.length > 500) return page("اكتب نصًا لكل رد من 1 إلى 500 حرف.", undefined, settings);
+    await env.DB.prepare("INSERT INTO automation_settings (key, value, updated_at) VALUES ('product_bot', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at")
+      .bind(JSON.stringify(settings), new Date().toISOString()).run();
+    return redirect("/admin/products?saved=1");
+  }
+  const availability = url.pathname.match(/^\/admin\/products\/(\d+)\/availability$/);
+  if (availability) {
+    const active = String(form.get("active"));
+    if (!["0", "1"].includes(active)) return page("حالة التوفر غير صالحة.");
+    const result = await env.DB.prepare("UPDATE products SET active = ?, updated_at = ? WHERE id = ?")
+      .bind(Number(active), new Date().toISOString(), Number(availability[1])).run();
+    if (!result.meta.changes) return page("المنتج غير موجود. حدّث الصفحة.");
+    return redirect("/admin/products?saved=1");
+  }
+  const idMatch = url.pathname.match(/^\/admin\/products\/(\d+)$/);
+  const id = idMatch ? Number(idMatch[1]) : null;
+  if (id !== null && !Number.isSafeInteger(id)) return page("معرّف المنتج غير صالح.");
+  const parsed = parseProductForm(form);
+  if (!parsed.ok) return page(parsed.error, { id, form });
+  const uploaded = await parseProductImage(form);
+  if (!uploaded.ok) return page(uploaded.error, { id, form });
+  const result = await saveProduct(env.DB, parsed.product, id, uploaded.image);
+  if (!result.ok) return page(result.error, { id, form });
+  return redirect("/admin/products?saved=1");
+}
+
 async function handleAdminGet(request: Request, env: AppEnv, url: URL): Promise<Response> {
   if (!env.ADMIN_TOKEN) {
     return html(renderMissingAdminTokenPage(), 503);
@@ -882,14 +991,15 @@ async function handleAdminGet(request: Request, env: AppEnv, url: URL): Promise<
   }
 
   const filters = parseActivityFilters(url);
-  const [rules, recentEvents, messageEvents, stats, connection, dmFeatures, sentDms] = await Promise.all([
+  const [rules, recentEvents, messageEvents, stats, connection, dmFeatures, sentDms, inventory] = await Promise.all([
     getRules(env.DB, false),
     getRecentEvents(env.DB, filters),
     getRecentMessageEvents(env.DB),
     getDashboardStats(env.DB),
     getConnectionStatus(env),
     getDmFeatureSettings(env.DB),
-    getSentDms(env.DB, 5)
+    getSentDms(env.DB, 5),
+    url.pathname === "/admin" ? getProducts(env.DB) : Promise.resolve([])
   ]);
   const [replyStats, publication] = await Promise.all([
     getReplyStats(env.DB, rules, dmFeatures),
@@ -897,12 +1007,16 @@ async function handleAdminGet(request: Request, env: AppEnv, url: URL): Promise<
   ]);
 
   return html(renderDashboardPage({
+    view: url.pathname === "/admin" ? "overview" : url.pathname.split("/")[2] as "automations" | "activity" | "stats" | "advanced",
+    channelActivity: await recentChannelActivity(env.DB),
+    tiktokActivity: await recentTikTokEvents(env.DB),
     dryRun: isDryRun(env),
-    localPreview: ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname),
+    localPreview: !env.SAAS_MODE && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname),
     rules,
     recentEvents,
     messageEvents,
     recentDms: sentDms,
+    featuredProduct: inventory.find(product => product.active && product.image_id) ?? inventory.find(product => product.active) ?? null,
     replyStats,
     stats,
     connection,
@@ -911,7 +1025,7 @@ async function handleAdminGet(request: Request, env: AppEnv, url: URL): Promise<
     // Shown in the overview and used for DM links: the verified account name, or OWNER_IG_USERNAME.
     accountUsername: accountUsername(env, connection),
     filters,
-    flash: url.searchParams.get("saved") === "1" ? "Saved." : null
+    flash: url.searchParams.get("saved") === "1" ? "تم الحفظ." : null
   }));
 }
 
@@ -923,10 +1037,10 @@ function accountUsername(env: AppEnv, connection: InstagramTokenStatus): string 
 async function handleSentDms(request: Request, env: AppEnv, url: URL): Promise<Response> {
   const wantsJson = url.searchParams.get("format") === "json";
   if (!env.ADMIN_TOKEN) {
-    return wantsJson ? json({ ok: false, error: "Set ADMIN_TOKEN first." }, 503) : html(renderMissingAdminTokenPage(), 503);
+    return wantsJson ? json({ ok: false, error: "اضبط ADMIN_TOKEN أولًا." }, 503) : html(renderMissingAdminTokenPage(), 503);
   }
   if (!(await isAdminRequest(request, env))) {
-    return wantsJson ? json({ ok: false, error: "Login required." }, 401) : redirect("/admin");
+    return wantsJson ? json({ ok: false, error: "يلزم تسجيل الدخول." }, 401) : redirect("/admin");
   }
 
   const [rows, summary] = await Promise.all([getSentDms(env.DB), getSentDmSummary(env.DB, new Date())]);
@@ -946,14 +1060,14 @@ async function handleDmFeatureSettings(request: Request, env: AppEnv, path: stri
 
   if (path === "/admin/dm-features/publish") {
     if (isDryRun(env)) {
-      return html(renderErrorPage("Publishing is off in test mode. Set DRY_RUN to \"false\" before publishing conversation starters."), 409);
+      return html(renderErrorPage("النشر متوقف في وضع الاختبار. اضبط DRY_RUN على \"false\" قبل نشر أزرار المحادثة."), 409);
     }
     const error = validateDmFeatureSettings(settings, ruleIds);
     if (error) {
       return html(renderErrorPage(error), 400);
     }
     await publishIceBreakers(env, settings);
-    return redirect("/admin#dm-tools");
+    return redirect("/admin/advanced#dm-tools");
   }
 
   const form = await request.formData();
@@ -977,7 +1091,7 @@ async function handleDmFeatureSettings(request: Request, env: AppEnv, path: stri
     return html(renderErrorPage(error), 400);
   }
   await saveDmFeatureSettings(env.DB, next);
-  return redirect("/admin?saved=1#dm-tools");
+  return redirect("/admin/advanced?saved=1#dm-tools");
 }
 
 type SettingsChange = { ok: true; settings: DmFeatureSettings } | { ok: false; error: string; status: number };
@@ -988,17 +1102,17 @@ function applyStoryRuleForm(form: FormData, settings: DmFeatureSettings): Settin
   const id = getFormString(form, "id").trim();
   const index = next.storyRules.findIndex((rule) => rule.id === id);
   if (id && index === -1) {
-    return { ok: false, error: "Story rule was not found. Reload the dashboard.", status: 404 };
+    return { ok: false, error: "قاعدة القصة غير موجودة. حدّث لوحة الإدارة.", status: 404 };
   }
   if (action === "delete") {
     if (index === -1) {
-      return { ok: false, error: "Choose a story rule to delete.", status: 400 };
+      return { ok: false, error: "اختر قاعدة القصة المراد حذفها.", status: 400 };
     }
     next.storyRules.splice(index, 1);
     return { ok: true, settings: next };
   }
   if (action !== "save") {
-    return { ok: false, error: "Choose save or delete.", status: 400 };
+    return { ok: false, error: "اختر الحفظ أو الحذف.", status: 400 };
   }
   const parsed = parseStoryRuleForm(form);
   if (!parsed.ok) {
@@ -1006,7 +1120,7 @@ function applyStoryRuleForm(form: FormData, settings: DmFeatureSettings): Settin
   }
   if (index === -1) {
     if (next.storyRules.length >= MAX_STORY_RULES) {
-      return { ok: false, error: `You can save up to ${MAX_STORY_RULES} story rules.`, status: 400 };
+      return { ok: false, error: `الحد الأقصى للحفظ: ${MAX_STORY_RULES} قاعدة قصة.`, status: 400 };
     }
     next.storyRules.push(parsed.settings);
   } else {
@@ -1021,21 +1135,21 @@ function applyCustomReplyForm(form: FormData, settings: DmFeatureSettings): Sett
   const id = getFormString(form, "id").trim();
   const index = next.customReplies.findIndex((reply) => reply.id === id);
   if (id && index === -1) {
-    return { ok: false, error: "Custom reply was not found. Reload the dashboard.", status: 404 };
+    return { ok: false, error: "الرد المخصص غير موجود. حدّث لوحة الإدارة.", status: 404 };
   }
   if (action === "delete") {
     if (index === -1) {
-      return { ok: false, error: "Choose a custom reply to delete.", status: 400 };
+      return { ok: false, error: "اختر الرد المخصص المراد حذفه.", status: 400 };
     }
     const usage = replyUsage(next, customReplyKey(id));
     if (usage.length > 0) {
-      return { ok: false, error: `This reply is used by the ${usage.join(" and ")}. Choose another reply there first.`, status: 400 };
+      return { ok: false, error: `هذا الرد مستخدم بواسطة ${usage.join(" و")}. اختر ردًا آخر هناك أولًا.`, status: 400 };
     }
     next.customReplies.splice(index, 1);
     return { ok: true, settings: next };
   }
   if (action !== "save") {
-    return { ok: false, error: "Choose save or delete.", status: 400 };
+    return { ok: false, error: "اختر الحفظ أو الحذف.", status: 400 };
   }
   const parsed = parseCustomReplyForm(form);
   if (!parsed.ok) {
@@ -1043,7 +1157,7 @@ function applyCustomReplyForm(form: FormData, settings: DmFeatureSettings): Sett
   }
   if (index === -1) {
     if (next.customReplies.length >= MAX_CUSTOM_REPLIES) {
-      return { ok: false, error: `You can save up to ${MAX_CUSTOM_REPLIES} custom replies.`, status: 400 };
+      return { ok: false, error: `الحد الأقصى للحفظ: ${MAX_CUSTOM_REPLIES} ردًا مخصصًا.`, status: 400 };
     }
     next.customReplies.push(parsed.settings);
   } else {
@@ -1111,7 +1225,7 @@ async function handleCreateRule(request: Request, env: AppEnv): Promise<Response
     )
     .run();
 
-  return redirect("/admin?saved=1");
+  return redirect("/admin/automations?saved=1");
 }
 
 async function handleUpdateRule(request: Request, env: AppEnv, ruleId: number): Promise<Response> {
@@ -1126,15 +1240,15 @@ async function handleUpdateRule(request: Request, env: AppEnv, ruleId: number): 
     // Starters and story rules point at rules by ID; keep them working.
     const usage = replyUsage(await getDmFeatureSettings(env.DB), ruleReplyKey(ruleId));
     if (usage.length > 0) {
-      return html(renderErrorPage(`This rule is used by the ${usage.join(" and ")}. Choose another reply there before deleting it.`), 400);
+      return html(renderErrorPage(`هذه القاعدة مستخدمة بواسطة ${usage.join(" و")}. اختر ردًا آخر هناك قبل حذفها.`), 400);
     }
     await env.DB.prepare("DELETE FROM rules WHERE id = ?").bind(ruleId).run();
-    return redirect("/admin?saved=1");
+    return redirect("/admin/automations?saved=1");
   }
 
   const existing = await getRuleById(env.DB, ruleId);
   if (!existing) {
-    return html(renderErrorPage("That automation no longer exists."), 404);
+    return html(renderErrorPage("هذه الأتمتة لم تعد موجودة."), 404);
   }
 
   if (action === "toggle") {
@@ -1148,7 +1262,7 @@ async function handleUpdateRule(request: Request, env: AppEnv, ruleId: number): 
     )
       .bind(new Date().toISOString(), ruleId)
       .run();
-    return redirect("/admin?saved=1");
+    return redirect("/admin/automations?saved=1");
   }
 
   // A form without the channel picker keeps the rule's current channels.
@@ -1188,10 +1302,10 @@ async function handleUpdateRule(request: Request, env: AppEnv, ruleId: number): 
     )
     .run();
 
-  return redirect("/admin?saved=1");
+  return redirect("/admin/automations?saved=1");
 }
 
-const CHANNEL_NAMES: Record<Channel, string> = { comments: "comments", dms: "DMs", stories: "story replies" };
+const CHANNEL_NAMES: Record<Channel, string> = { comments: "التعليقات", dms: "الرسائل الخاصة", stories: "ردود القصص" };
 
 /**
  * Active rules are checked in order, so a keyword shared by two active rules on
@@ -1212,7 +1326,7 @@ async function findKeywordConflict(
     const shared = rule.channels.filter((channel) => other.channels.includes(channel));
     const taken = shared.length ? other.keywords.find((keyword) => wanted.has(keyword.trim().toLowerCase())) : undefined;
     if (taken) {
-      return `${taken.toUpperCase()} is already used by “${other.label}” for ${shared.map((channel) => CHANNEL_NAMES[channel]).join(" and ")}. Pick a different keyword, or pause “${other.label}” first.`;
+      return `${taken.toUpperCase()} مستخدمة بالفعل في «${other.label}» في ${shared.map((channel) => CHANNEL_NAMES[channel]).join(" و")}. اختر كلمة مختلفة أو أوقف «${other.label}» أولًا.`;
     }
   }
   return null;
@@ -1224,36 +1338,36 @@ async function handleRetryEvent(request: Request, env: AppEnv, commentId: string
   }
 
   if (isDryRun(env)) {
-    return html(renderErrorPage("Sending is off in test mode. Set DRY_RUN to \"false\" before retrying."), 400);
+    return html(renderErrorPage("الإرسال متوقف في وضع الاختبار. اضبط DRY_RUN على \"false\" قبل إعادة المحاولة."), 400);
   }
 
   const event = await getRetryEvent(env.DB, commentId);
   if (!event || !isRetryableStatus(event.status)) {
-    return html(renderErrorPage("Only failed replies can be retried."), 400);
+    return html(renderErrorPage("يمكن إعادة محاولة الردود التي فشلت فقط."), 400);
   }
 
   if (event.matched_rule_id === null) {
-    return html(renderErrorPage("That comment does not have a matched rule to retry."), 400);
+    return html(renderErrorPage("لا توجد قاعدة مطابقة لهذا التعليق لإعادة المحاولة."), 400);
   }
 
   const rule = event.matched_rule_id === FALLBACK_RULE_ID
     ? getFallbackRule(env)
     : await getRuleById(env.DB, event.matched_rule_id);
   if (!rule) {
-    return html(renderErrorPage("The matched rule no longer exists."), 400);
+    return html(renderErrorPage("القاعدة المطابقة لم تعد موجودة."), 400);
   }
 
   if (!rule.active) {
-    return html(renderErrorPage("This rule is turned off. Turn it on before retrying."), 400);
+    return html(renderErrorPage("هذه القاعدة متوقفة. فعّلها قبل إعادة المحاولة."), 400);
   }
 
   if (!rule.channels.includes("comments")) {
-    return html(renderErrorPage("This automation no longer listens on comments, so the comment cannot be retried."), 400);
+    return html(renderErrorPage("لم تعد الأتمتة تستقبل التعليقات، لذلك لا يمكن إعادة المحاولة."), 400);
   }
 
   const originalKeyword = event.matched_keyword?.trim().toLowerCase();
   if (originalKeyword && !rule.keywords.some((keyword) => keyword.trim().toLowerCase() === originalKeyword)) {
-    return html(renderErrorPage("The keyword this comment matched was removed from the rule, so it cannot be retried with the changed rule."), 400);
+    return html(renderErrorPage("حُذفت الكلمة المطابقة من القاعدة؛ لا يمكن إعادة المحاولة بعد تغييرها."), 400);
   }
 
   const matchedRule: MatchedRule = {
@@ -1262,13 +1376,14 @@ async function handleRetryEvent(request: Request, env: AppEnv, commentId: string
   };
 
   // Claim the event before sending so two clicks cannot deliver two DMs.
+  if (env.RESERVE_REPLY && !env.RESERVE_REPLY()) return html(renderErrorPage("انتهت التجربة أو وصلت إلى حد الردود."), 403);
   const claimed = await env.DB.prepare(
     "UPDATE comment_events SET status = 'retrying' WHERE comment_id = ? AND status = ?"
   )
     .bind(commentId, event.status)
     .run();
   if (!claimed.meta.changes) {
-    return html(renderErrorPage("This reply is already being retried or has changed. Refresh the dashboard."), 409);
+    return html(renderErrorPage("تجري إعادة المحاولة بالفعل أو تغيّر الرد. حدّث لوحة الإدارة."), 409);
   }
 
   try {
@@ -1371,14 +1486,14 @@ async function getRecentMessageEvents(db: D1Database): Promise<RecentMessageRow[
 async function getDashboardStats(db: D1Database): Promise<DashboardStats> {
   const result = await db.prepare(
     `SELECT
-       (SELECT COUNT(*) FROM comment_events) AS comments,
-       (SELECT COUNT(*) FROM message_events) AS messages,
+       (SELECT COUNT(*) FROM comment_events) + (SELECT COUNT(*) FROM tiktok_comment_events) AS comments,
+       (SELECT COUNT(*) FROM message_events) + (SELECT COUNT(*) FROM channel_events) AS messages,
        (SELECT COUNT(*) FROM comment_events WHERE status IN ('sent', 'sent_public_reply_error')) +
-         (SELECT COUNT(*) FROM message_events WHERE status = 'sent') AS sent,
+         (SELECT COUNT(*) FROM message_events WHERE status = 'sent') + (SELECT COUNT(*) FROM channel_events WHERE status = 'sent') + (SELECT COUNT(*) FROM tiktok_comment_events WHERE status = 'sent') AS sent,
        (SELECT COUNT(*) FROM comment_events WHERE status IN ('send_error', 'sent_public_reply_error') OR error IS NOT NULL) +
-         (SELECT COUNT(*) FROM message_events WHERE status = 'send_error' OR error IS NOT NULL) AS errors,
+         (SELECT COUNT(*) FROM message_events WHERE status = 'send_error' OR error IS NOT NULL) + (SELECT COUNT(*) FROM channel_events WHERE status = 'error' OR error IS NOT NULL) + (SELECT COUNT(*) FROM tiktok_comment_events WHERE status = 'error') AS errors,
        (SELECT COUNT(*) FROM comment_events WHERE status = 'dry_run_matched') +
-         (SELECT COUNT(*) FROM message_events WHERE status = 'dry_run_matched') AS testMatches`
+         (SELECT COUNT(*) FROM message_events WHERE status = 'dry_run_matched') + (SELECT COUNT(*) FROM channel_events WHERE status = 'test') + (SELECT COUNT(*) FROM tiktok_comment_events WHERE status = 'test') AS testMatches`
   ).first<DashboardStats>();
 
   return result ?? { comments: 0, messages: 0, sent: 0, errors: 0, testMatches: 0 };
@@ -1538,36 +1653,36 @@ function parseRuleForm(
     : [...defaultChannels];
 
   if (!label) {
-    return { ok: false, error: "Rule label is required." };
+    return { ok: false, error: "اكتب اسم الأتمتة." };
   }
 
   if (keywords.length === 0) {
-    return { ok: false, error: "Add at least one keyword." };
+    return { ok: false, error: "أضف كلمة مفتاحية واحدة على الأقل." };
   }
 
   const unusable = keywords.find((keyword) => !isBasicallyKeyword(keyword, keyword));
   if (unusable) {
-    return { ok: false, error: `“${unusable}” can never match. Keywords need a letter or number and at most eight words.` };
+    return { ok: false, error: `«${unusable}» لن تطابق رسالة. استخدم حروفًا أو أرقامًا وبحد أقصى ثماني كلمات.` };
   }
 
   if (channels.length === 0) {
-    return { ok: false, error: "Choose where the automation listens: comments, DMs, or story replies." };
+    return { ok: false, error: "اختر مصدر التفاعل: التعليقات أو الرسائل أو ردود القصص." };
   }
 
   if (!replyText) {
-    return { ok: false, error: "DM reply text is required." };
+    return { ok: false, error: "اكتب نص الرسالة الخاصة." };
   }
 
   if ((linkUrl && !linkButtonLabel) || (!linkUrl && linkButtonLabel)) {
-    return { ok: false, error: "Add both a button link and button label, or leave both blank." };
+    return { ok: false, error: "أضف رابط الزر ونصه معًا، أو اتركهما فارغين." };
   }
 
   if (linkUrl && !isHttpsUrl(linkUrl)) {
-    return { ok: false, error: "Button link must be a valid https URL." };
+    return { ok: false, error: "يجب أن يكون رابط الزر صالحًا ويبدأ بـ https." };
   }
 
   if (linkButtonLabel && linkButtonLabel.length > 20) {
-    return { ok: false, error: "Button label must be 20 characters or fewer." };
+    return { ok: false, error: "الحد الأقصى لنص الزر 20 حرفًا." };
   }
 
   const maxReplyLength = linkUrl ? MAX_BUTTON_TEXT_LENGTH : MAX_TEXT_MESSAGE_LENGTH;
@@ -1575,8 +1690,8 @@ function parseRuleForm(
     return {
       ok: false,
       error: linkUrl
-        ? `Keep the DM message to 640 characters when it has a button. That’s Instagram’s limit (this one has ${replyText.length.toLocaleString("en-US")}).`
-        : `Keep the DM message to 1,000 characters. That’s Instagram’s limit (this one has ${replyText.length.toLocaleString("en-US")}).`
+        ? `الحد الأقصى للرسالة مع زر 640 حرفًا (عدد الحروف الحالي: ${replyText.length.toLocaleString("ar-LY")}).`
+        : `الحد الأقصى للرسالة 1,000 حرف (عدد الحروف الحالي: ${replyText.length.toLocaleString("ar-LY")}).`
     };
   }
 
@@ -1584,7 +1699,7 @@ function parseRuleForm(
     publicReplyText.length > MAX_PUBLIC_REPLY_TOTAL ||
     publicReplyText.split(/\r?\n/).some((line) => line.trim().length > MAX_PUBLIC_REPLY_LENGTH)
   )) {
-    return { ok: false, error: "Each public reply must be 2,200 characters or fewer, with 10,000 characters in total." };
+    return { ok: false, error: "الحد الأقصى للرد العلني 2,200 حرف، و10,000 حرف لجميع الصيغ." };
   }
 
   return { ok: true, rule: { label, channels, keywords, replyText, publicReplyText, linkUrl, linkButtonLabel, active } };
@@ -1607,7 +1722,7 @@ function parseKeywordsInput(input: string): string[] {
   const seen = new Set<string>();
   const keywords: string[] = [];
 
-  for (const part of input.split(/[\n,]/)) {
+  for (const part of input.split(/[\n,،]/)) {
     const keyword = part.trim();
     const key = keyword.toLowerCase();
     if (!keyword || seen.has(key)) {

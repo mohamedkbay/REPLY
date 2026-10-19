@@ -1,5 +1,5 @@
 {
-  "name": "manychat-lite-cloudflare",
+  "name": "reply",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -8,6 +8,9 @@
     "check": "tsc --noEmit && wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
+    "build:saas": "node server/build.mjs",
+    "start:saas": "node --env-file=.saas.env server/start.mjs",
+    "test:saas": "node --disable-warning=ExperimentalWarning --test tests/saas.test.mjs",
     "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.mjs",
     "test:runtime": "node tests/token-runtime.mjs",
     "types": "wrangler types"
@@ -18,5 +21,16 @@
     "miniflare": "^4.20260625.0",
     "typescript": "latest",
     "wrangler": "latest"
+  },
+  "description": "Arabic-first merchant inventory and automated product replies, with a bilingual interface and isolated customer workspaces.",
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamedkbay/REPLY.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mohamedkbay/REPLY/issues"
   }
 }
