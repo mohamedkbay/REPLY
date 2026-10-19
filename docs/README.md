@@ -21,4 +21,4 @@ All explanatory repository documentation is English. Arabic is retained where it
 
 ## Screenshots and motion
 
-`media/Reply-Login-Logo*.jpg` show the current standalone top symbol. Earlier inventory, signup and identity captures document the preceding full-lockup treatment; they are labelled accordingly in the main README. Inventory shown is synthetic demonstration data. `Reply-Theme-Language-Motion.mp4` records the actual browser implementation of the preference wave. The external reference video is not distributed here.
+`media/reply-login-{light,dark}-{desktop,mobile}.jpg` show matching current English sign-in captures in both modes. `media/Reply-Login-Logo*.jpg` show the same standalone top symbol in Arabic. Earlier inventory, signup and identity captures document the preceding full-lockup treatment; they are labelled accordingly in the main README. Inventory shown is synthetic demonstration data. `Reply-Theme-Language-Motion.mp4` records the actual browser implementation of the preference wave. The external reference video is not distributed here.

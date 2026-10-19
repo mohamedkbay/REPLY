@@ -14,7 +14,15 @@
   <p><a href="#run-locally">Run locally</a> · <a href="docs/PRODUCT.md">Product</a> · <a href="docs/DESIGN-PHILOSOPHY.md">Design</a> · <a href="docs/ARCHITECTURE.md">Architecture</a> · <a href="deploy/README.md">Deploy</a></p>
 </div>
 
-![Reply sign-in: standalone identity, clear dark typography and Arabic-first layout](docs/media/Reply-Login-Logo.jpg)
+<table>
+  <thead><tr><th>Light mode</th><th>Dark mode</th></tr></thead>
+  <tbody><tr>
+    <td width="50%"><a href="docs/media/reply-login-light-desktop.jpg"><img src="docs/media/reply-login-light-desktop.jpg" alt="Reply sign-in in light mode"></a></td>
+    <td width="50%"><a href="docs/media/reply-login-dark-desktop.jpg"><img src="docs/media/reply-login-dark-desktop.jpg" alt="Reply sign-in in dark mode"></a></td>
+  </tr></tbody>
+</table>
+
+The same workspace in two modes. Both preserve Cairo, the standalone R identity and clear form hierarchy. Click a preview to inspect it at full size.
 
 ## The idea
 
@@ -87,14 +95,17 @@ Reply has an expressive entrance and a practical working interior. The response-
 
 Cairo is served locally in four weights so Arabic does not depend on a remote font request. Dark mode uses white primary writing and pale secondary writing on distinct dark surfaces. The menu, inventory and settings remain readable on a phone. Theme and language changes share an 880ms organic wave; reduced-motion preferences receive an immediate switch.
 
+### Light and dark on a phone
+
 <table>
-  <tr>
-    <td width="50%"><img src="docs/media/Reply-Login-Logo-Mobile.jpg" alt="Reply mobile sign-in"></td>
-    <td width="50%"><img src="docs/media/Reply-Dark-Signup-English.jpg" alt="English account creation, earlier full-lockup capture"></td>
-  </tr>
+  <thead><tr><th>Light mode</th><th>Dark mode</th></tr></thead>
+  <tbody><tr>
+    <td width="50%" align="center"><img src="docs/media/reply-login-light-mobile.jpg" width="320" alt="Reply mobile sign-in in light mode"></td>
+    <td width="50%" align="center"><img src="docs/media/reply-login-dark-mobile.jpg" width="320" alt="Reply mobile sign-in in dark mode"></td>
+  </tr></tbody>
 </table>
 
-The right-hand registration capture and inventory captures below predate the compact top-symbol refinement; their content, layout and theme remain representative. The sign-in captures above show the current top-logo treatment.
+These matching captures show the current sign-in screen in English, with the same layout, content and compact symbol. Arabic remains the initial interface default. The earlier inventory capture below predates the compact top-symbol refinement and shows synthetic demonstration products.
 
 ![Inventory with explicitly labelled demonstration products](docs/media/Reply-Dark-Desktop.jpg)
 
