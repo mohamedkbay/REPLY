@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a reproducible Reply behavior
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, OTPs, cookies or real customer content. Use the private process in SECURITY.md for vulnerabilities.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce with synthetic data
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Revision, runtime, browser and language
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots
